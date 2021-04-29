@@ -13,6 +13,7 @@ package org.omegazero.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class EventQueueExecutor extends EventQueue {
 
@@ -24,6 +25,8 @@ public class EventQueueExecutor extends EventQueue {
 
 	private List<WorkerThread> workerThreads = new ArrayList<WorkerThread>();
 	private int workingThreads = 0;
+
+	private Consumer<Throwable> errorHandler;
 
 	private boolean running = true;
 
@@ -175,6 +178,17 @@ public class EventQueueExecutor extends EventQueue {
 		return workerThreads.size();
 	}
 
+	/**
+	 * Sets the error handler that will be called when an error occurs while executing a task in any of the worker threads.<br>
+	 * <br>
+	 * It is recommended this handler be set, otherwise errors will be printed to <code>stderr</code> using {@link Throwable#printStackTrace()} and otherwise ignored.
+	 * 
+	 * @param errorHandler The error handler
+	 */
+	public void setErrorHandler(Consumer<Throwable> errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
 
 	public class WorkerThread extends Thread {
 
@@ -188,7 +202,14 @@ public class EventQueueExecutor extends EventQueue {
 			while(EventQueueExecutor.this.running || EventQueueExecutor.this.isTaskQueued()){
 				EventQueueExecutor.this.waitForTask();
 				EventQueueExecutor.this.workingThreads++;
-				EventQueueExecutor.this.execute();
+				try{
+					EventQueueExecutor.this.execute();
+				}catch(Throwable e){
+					if(EventQueueExecutor.this.errorHandler != null)
+						EventQueueExecutor.this.errorHandler.accept(e);
+					else
+						e.printStackTrace();
+				}
 				EventQueueExecutor.this.workingThreads--;
 			}
 		}

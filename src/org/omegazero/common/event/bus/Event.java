@@ -102,9 +102,7 @@ public class Event {
 	}
 
 	/**
-	 * Returns <b>true</b> if this event may be canceled using {@link Event#cancel()}.
-	 * 
-	 * @return The method name of this event
+	 * @return <b>true</b> if this event may be canceled using {@link Event#cancel()}.
 	 */
 	public boolean isCancelable() {
 		return cancelable;
@@ -115,6 +113,7 @@ public class Event {
 	}
 
 	/**
+	 * 
 	 * @return A string containing the method name and a string representation of method parameters
 	 */
 	public String getEventSignature() {
@@ -138,8 +137,8 @@ public class Event {
 	}
 
 	/**
-	 * Cancels this event. An event May only be canceled if it is explicitly cancelable ({@link Event#isCancelable()} returns <b>true</b>), otherwise, an
-	 * {@link IllegalStateException} is thrown.<br>
+	 * Cancels this event. An event may only be canceled if it is explicitly cancelable ({@link Event#isCancelable()} returns <b>true</b>), otherwise, an
+	 * {@link UnsupportedOperationException} is thrown.<br>
 	 * <br>
 	 * Behavior when an event is canceled is usage-defined.
 	 */
@@ -153,6 +152,15 @@ public class Event {
 	 */
 	public void reset() {
 		this.canceled = false;
+	}
+
+	/**
+	 * 
+	 * @return <b>true</b> if this event has a variable state; otherwise, this event object may be safely used multiple times and/or concurrently
+	 */
+	public boolean isStateful() {
+		// cancelable is the only variable thing here, everything else is final and cannot change
+		return this.cancelable;
 	}
 
 

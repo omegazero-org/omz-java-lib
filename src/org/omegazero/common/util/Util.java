@@ -71,13 +71,24 @@ public final class Util {
 	 * Adds a shutdown hook which runs the given <tt>Runnable</tt>.
 	 * 
 	 * @param handler The handler to run when the runtime is about to exit
+	 * @see Util#onClose(Runnable, boolean)
 	 */
 	public static void onClose(Runnable handler) {
+		Util.onClose(handler, false);
+	}
+
+	/**
+	 * Adds a shutdown hook which runs the given <tt>Runnable</tt>.
+	 * 
+	 * @param handler          The handler to run when the runtime is about to exit
+	 * @param waitForNonDaemon If <b>true</b> and the shutdown was triggered, <b>handler</b> will only be run if all other non-daemon threads have exited
+	 */
+	public static void onClose(Runnable handler, boolean waitForNonDaemon) {
 		Thread t = new Thread(){
 
 			@Override
 			public void run() {
-				while(nonDaemonThreadRunning())
+				while(waitForNonDaemon && nonDaemonThreadRunning())
 					try{
 						Thread.sleep(100);
 					}catch(InterruptedException e){

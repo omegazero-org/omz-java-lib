@@ -28,7 +28,9 @@ public class TaskScheduler {
 
 	private long idCounter = 0;
 
-	private EventQueueExecutor executor = new EventQueueExecutor(false);
+	private EventQueueExecutor executor = new EventQueueExecutor(false, "TaskScheduler");
+
+	private boolean running = true;
 
 	/**
 	 * Creates a TaskScheduler and starts the background execution thread.
@@ -38,8 +40,7 @@ public class TaskScheduler {
 
 			@Override
 			public void run() {
-				TaskScheduler.this.execute(false);
-				TaskScheduler.this.executor.exit(true);
+				TaskScheduler.this.exit();
 			}
 		};
 		shutdownThread.setName("TaskSchedulerShutdownThread");
@@ -73,7 +74,7 @@ public class TaskScheduler {
 	}
 
 	/**
-	 * Schedules a task to be run every <b>interval</b> milliseconds. The task is first run in <b>interval</b> milliseconds relative to the this function was called.
+	 * Schedules a task to be run every <b>interval</b> milliseconds. The task is first run in <b>interval</b> milliseconds relative to the time this function was called.
 	 * 
 	 * @param handler  The handler to be run at the specified <b>interval</b>
 	 * @param interval The time in milliseconds between calls
@@ -139,7 +140,7 @@ public class TaskScheduler {
 
 
 	private void execute(boolean persistent) {
-		while(true){
+		while(!persistent || this.running){
 			try{
 				synchronized(queue){
 					if(!persistent && isAllDaemon())
@@ -201,6 +202,22 @@ public class TaskScheduler {
 			}
 		}
 		return true;
+	}
+
+
+	/**
+	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future) and exiting the worker threads.<br>
+	 * The caller thread is blocked until all worker threads have exited.
+	 */
+	public void exit() {
+		if(!this.running)
+			return;
+		this.running = false;
+		synchronized(queue){
+			queue.notify();
+		}
+		TaskScheduler.this.execute(false);
+		TaskScheduler.this.executor.exit(true);
 	}
 
 

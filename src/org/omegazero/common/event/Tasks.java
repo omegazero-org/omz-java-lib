@@ -33,23 +33,45 @@ public final class Tasks {
 		}
 	}
 
+	/**
+	 * @see TaskScheduler#timeout(Consumer, long, Object...)
+	 */
 	public static TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
 		init();
 		return globalInstance.timeout(handler, timeout, args);
 	}
 
+	/**
+	 * @see TaskScheduler#interval(Consumer, long, Object...)
+	 */
 	public static TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
 		init();
 		return globalInstance.interval(handler, interval, args);
 	}
 
+	/**
+	 * @see TaskScheduler#clear(TimerTask)
+	 */
 	public static boolean clear(TimerTask tt) {
 		init();
 		return globalInstance.clear(tt);
 	}
 
+	/**
+	 * @see TaskScheduler#clear(long)
+	 */
 	public static boolean clear(long id) {
 		init();
 		return globalInstance.clear(id);
+	}
+
+	/**
+	 * @see TaskScheduler#exit()
+	 */
+	public static void exit() {
+		if(globalInstance != null){
+			globalInstance.exit();
+			globalInstance = null;
+		}
 	}
 }

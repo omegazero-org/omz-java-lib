@@ -12,12 +12,13 @@
 package org.omegazero.common.event;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class EventQueueExecutor extends EventQueue {
 
-	private static int threadCounter = 0;
+	private static HashMap<String, Integer> threadCounter = new HashMap<>();
 
 	private final int maxThreads;
 	private final boolean daemon;
@@ -193,7 +194,9 @@ public class EventQueueExecutor extends EventQueue {
 	public class WorkerThread extends Thread {
 
 		public WorkerThread() {
-			super.setName(EventQueueExecutor.this.threadName + "-" + (threadCounter++));
+			int counter = threadCounter.containsKey(EventQueueExecutor.this.threadName) ? threadCounter.get(EventQueueExecutor.this.threadName) : 0;
+			super.setName(EventQueueExecutor.this.threadName + "-" + (counter++));
+			threadCounter.put(EventQueueExecutor.this.threadName, counter);
 			super.setDaemon(EventQueueExecutor.this.daemon);
 		}
 

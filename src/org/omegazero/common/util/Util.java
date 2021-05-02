@@ -88,7 +88,7 @@ public final class Util {
 
 			@Override
 			public void run() {
-				while(waitForNonDaemon && nonDaemonThreadRunning())
+				while(waitForNonDaemon && Util.nonDaemonThreadRunning())
 					try{
 						Thread.sleep(100);
 					}catch(InterruptedException e){
@@ -96,22 +96,61 @@ public final class Util {
 					}
 				handler.run();
 			}
-
-			private boolean nonDaemonThreadRunning() {
-				long thisId = Thread.currentThread().getId();
-				boolean r = false;
-				for(Thread t : Thread.getAllStackTraces().keySet()){
-					if(t.getId() != thisId && !t.isDaemon() && !"DestroyJavaVM".equals(t.getName())){
-						r = true;
-						break;
-					}
-				}
-				return r;
-			}
 		};
 		t.setName("ShutdownThread");
 		t.setPriority(Thread.MIN_PRIORITY);
 		Runtime.getRuntime().addShutdownHook(t);
+	}
+
+	/**
+	 * Checks if there is at least one non-daemon thread running.<br>
+	 * The caller thread and the "DestroyJavaVM" thread are excluded from this check.
+	 * 
+	 * @return <b>true</b> if there is at least one non-daemon thread running apart from the caller and "DestroyJavaVM" thread
+	 */
+	public static boolean nonDaemonThreadRunning() {
+		long thisId = Thread.currentThread().getId();
+		boolean r = false;
+		for(Thread t : Thread.getAllStackTraces().keySet()){
+			if(t.getId() != thisId && !t.isDaemon() && !"DestroyJavaVM".equals(t.getName())){
+				r = true;
+				break;
+			}
+		}
+		return r;
+	}
+
+	/**
+	 * Blocks this thread until all non-daemon threads apart from the caller and "DestroyJavaVM" thread have exited ({@link Util#nonDaemonThreadRunning()} returns <b>false</b>).
+	 * 
+	 * @see Util#waitForNonDaemonThreads(int)
+	 */
+	public static void waitForNonDaemonThreads() {
+		Util.waitForNonDaemonThreads(0);
+	}
+
+	/**
+	 * Blocks this thread until all non-daemon threads apart from the caller and "DestroyJavaVM" thread have exited ({@link Util#nonDaemonThreadRunning()} returns <b>false</b>), or
+	 * at least <b>timeout</b> milliseconds have passed.<br>
+	 * <br>
+	 * If the caller thread is interrupted while waiting, this method returns.
+	 * 
+	 * @implNote The poll interval is 50 milliseconds, meaning this method may not return immediately after all said threads have exited.
+	 * @param timeout Maximum amount of time to wait for non-daemon threads to exit, in milliseconds. May be 0 to wait for an unlimited amount of time
+	 * @return <b>true</b> if this function returns because all non-daemon threads have exited, or <b>false</b> if the timeout was exceeded or this thread was interrupted
+	 */
+	public static boolean waitForNonDaemonThreads(int timeout) {
+		long start = System.currentTimeMillis();
+		while(Util.nonDaemonThreadRunning()){
+			if(timeout > 0 && System.currentTimeMillis() - start > timeout)
+				return false;
+			try{
+				Thread.sleep(50);
+			}catch(InterruptedException e){
+				return false;
+			}
+		}
+		return true;
 	}
 
 

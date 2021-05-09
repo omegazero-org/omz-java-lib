@@ -18,7 +18,7 @@ public class LoggerOutputStream extends OutputStream {
 
 	private final Logger loggerInstance;
 
-	private final int[] buf = new int[512];
+	private final int[] buf = new int[1024];
 	private int bufLen = 0;
 
 	protected LoggerOutputStream(String name) {
@@ -26,23 +26,27 @@ public class LoggerOutputStream extends OutputStream {
 	}
 
 
-	public void writeOut() {
-		if(bufLen < 1)
-			return;
-		String text = new String(buf, 0, bufLen);
-		loggerInstance.info(text);
-		bufLen = 0;
+	public synchronized void writeOut() {
+		String text = new String(this.buf, 0, this.bufLen);
+		this.loggerInstance.info(text);
+		this.bufLen = 0;
 	}
 
 
 	@Override
-	public void write(int b) throws IOException {
-		if(b == '\r' || b == '\n'){
+	public synchronized void write(int b) throws IOException {
+		if(b == '\n'){
 			this.writeOut();
-		}else{
-			buf[bufLen++] = b;
-			if(bufLen >= buf.length)
+		}else if(b != '\r'){
+			this.buf[this.bufLen++] = b;
+			if(this.bufLen >= this.buf.length)
 				this.writeOut();
 		}
+	}
+
+	@Override
+	public void flush() {
+		if(this.bufLen > 0)
+			this.writeOut();
 	}
 }

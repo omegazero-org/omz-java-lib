@@ -107,6 +107,8 @@ public class EventQueueExecutor extends EventQueue {
 	// only need to override this methods because other overloaded methods use this method too
 	@Override
 	public void queue(Task task) {
+		if(!this.running)
+			throw new IllegalStateException("Tried to queue task but EventQueueExecutor is no longer running");
 		super.queue(task);
 		this.checkWorkers();
 	}
@@ -140,7 +142,7 @@ public class EventQueueExecutor extends EventQueue {
 	/**
 	 * Notifies worker threads that executor is exiting, causing them to complete running all tasks.
 	 * 
-	 * @param blocking If <b>true</b>, block the calling thread until all worker threads have exited
+	 * @param blocking If <code>true</code>, block the calling thread until all worker threads have exited
 	 */
 	public void exit(boolean blocking) {
 		synchronized(this){

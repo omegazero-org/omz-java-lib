@@ -73,13 +73,13 @@ public class EventBusSubscriber {
 
 
 	/**
-	 * Returns <b>true</b> if the given method <b>m</b> is a valid event listener method.
+	 * Returns <code>true</code> if the given method <b>m</b> is a valid event listener method.
 	 * 
 	 * @param m The method to validate
-	 * @return <b>true</b> if <b>m</b> is a valid event listener method
+	 * @return <code>true</code> if <b>m</b> is a valid event listener method
 	 */
 	public boolean isValidListenerMethod(Method m) {
-		return m.getReturnType() == void.class && m.isAnnotationPresent(SubscribeEvent.class);
+		return m.isAnnotationPresent(SubscribeEvent.class);
 	}
 
 	/**
@@ -89,10 +89,10 @@ public class EventBusSubscriber {
 	 * 
 	 * @param event The event to find a suitable method for
 	 * @param args
-	 * @return The valid event listener method, or <b>null</b> if the method was not found
+	 * @return The valid event listener method, or <code>null</code> if the method was not found
 	 */
 	public Method getListenerMethodForEvent(Event event, Object... args) {
-		return this.getListenerMethodWSig(event.getMethodName(), event.getParams(), event.getEventSignature());
+		return this.getListenerMethodWSig(event.getMethodName(), event.getParams(), event.getReturnType(), event.getEventSignature());
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class EventBusSubscriber {
 	 * 
 	 * @param event The event to check
 	 * @param args
-	 * @return <b>true</b> if a valid listener method for this event was found, <b>false</b> otherwise
+	 * @return <code>true</code> if a valid listener method for this event was found, <b>false</b> otherwise
 	 */
 	public boolean isListenerMethodForEventAvailable(Event event, Object... args) {
 		return this.getListenerMethodForEvent(event, args) != null;
@@ -108,27 +108,27 @@ public class EventBusSubscriber {
 
 
 	/**
-	 * Searches the valid event listener method with the given <b>name</b> and <b>parameterTypes</b>. Returns <b>null</b> if a suitable method was not found.<br>
+	 * Searches the valid event listener method with the given <b>name</b> and <b>parameterTypes</b>. Returns <code>null</code> if a suitable method was not found.<br>
 	 * <br>
 	 * The result of this method will be cached, including when a method was not found.
 	 * 
 	 * @param name           The name of the method to be searched
 	 * @param parameterTypes An array of parameter types the method should have
-	 * @return The valid event listener method, or <b>null</b> if the method was not found
+	 * @return The valid event listener method, or <code>null</code> if the method was not found
 	 */
-	public Method getListenerMethod(String name, Class<?>[] parameterTypes) {
-		return this.getListenerMethodWSig(name, parameterTypes, Event.createEventSignature(name, parameterTypes));
+	public Method getListenerMethod(String name, Class<?>[] parameterTypes, Class<?> returnType) {
+		return this.getListenerMethodWSig(name, parameterTypes, returnType, Event.createEventSignature(name, parameterTypes, returnType));
 	}
 
 
-	private Method getListenerMethodWSig(String name, Class<?>[] parameterTypes, String eventSig) {
+	private Method getListenerMethodWSig(String name, Class<?>[] parameterTypes, Class<?> returnType, String eventSig) {
 		Method method = null;
 		if(methodCache.containsKey(eventSig)){
 			method = methodCache.get(eventSig);
 		}else{
 			Method[] methods = this.type.getMethods();
 			for(Method m : methods){
-				if(ReflectionUtil.isMethod(m, name, parameterTypes) && isValidListenerMethod(m)){
+				if(ReflectionUtil.isMethod(m, name, parameterTypes) && m.getReturnType() == returnType && isValidListenerMethod(m)){
 					method = m;
 					break;
 				}
@@ -161,42 +161,42 @@ public class EventBusSubscriber {
 		if(this.forcedEvents == null)
 			return false;
 		for(String s : this.forcedEvents){
-			if(s.equals(event.getName()))
+			if(s.equals(event.getMethodName()))
 				return true;
 		}
 		return false;
 	}
 
+
 	/**
 	 * Gets the event handler method for the passed <b>event</b> and invokes it with the given arguments.<br>
 	 * <br>
-	 * A handler method must have the annotation {@link SubscribeEvent} with the optional {@link SubscribeEvent#priority()} argument and must be of return type void.
+	 * A handler method must have the annotation {@link SubscribeEvent} with the optional {@link SubscribeEvent#priority()} argument.
 	 * 
 	 * @param event The event to be dispatched to the event bus subscriber.
-	 * @param args  Arguments to be passed to the event method.
+	 * @param args
 	 * @throws ReflectiveOperationException
 	 * @see {@link EventBus#dispatchEvent(Event, Object...)}
 	 */
-	public boolean dispatchEvent(Event event, Object... args) throws ReflectiveOperationException {
+	public Object runEvent(Event event, Object... args) throws ReflectiveOperationException {
 		Method m = this.getListenerMethodForEvent(event, args);
 		if(m == null)
-			return false;
-		this.dispatchEventMethod(m, args);
-		return true;
+			throw new NoSuchMethodException("No listener method for event '" + event.getMethodName() + "'");
+		return this.runEventMethod(m, args);
 	}
 
 	/**
 	 * Validates and invokes the method <b>eventListener</b> with the given arguments.<br>
 	 * <br>
-	 * <b>eventListener</b> must be a valid event listener. See {@link EventBusSubscriber#dispatchEvent(Event, Object...)}.
+	 * <b>eventListener</b> must be a valid event listener. See {@link EventBusSubscriber#runEvent(Event, Object...)}.
 	 * 
-	 * @param eventListener
-	 * @param args
+	 * @param eventListener A valid event listener method.
+	 * @param args          Arguments to be passed to the event method.
 	 * @throws ReflectiveOperationException
 	 */
-	public void dispatchEventMethod(Method eventListener, Object... args) throws ReflectiveOperationException {
+	public Object runEventMethod(Method eventListener, Object... args) throws ReflectiveOperationException {
 		if(!isValidListenerMethod(eventListener))
 			throw new RuntimeException("Invalid eventListener method");
-		eventListener.invoke(this.instance, args);
+		return eventListener.invoke(this.instance, args);
 	}
 }

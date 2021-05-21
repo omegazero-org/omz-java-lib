@@ -17,78 +17,62 @@ import org.omegazero.common.util.ReflectionUtil;
 
 public class Event {
 
-	private final String name;
 	private final String methodName;
 	private final boolean cancelable;
 	private final Class<?>[] params;
+	private final Class<?> returnType;
+	private final boolean includeAllReturns;
 
 	private final String eventSignature;
 
 	private boolean canceled;
 
-	/**
-	 * See {@link Event#Event(String, String, boolean, Class[])}<br>
-	 * <br>
-	 * The <b>methodName</b> will be set to <b>name</b> with no arguments<br>
-	 * The event defaults to being non-cancelable.
-	 * 
-	 * @param name The unique name of this event. Further meaning is usage-defined
-	 */
-	public Event(String name) {
-		this(name, name, false, new Class<?>[0]);
-	}
 
 	/**
-	 * See {@link Event#Event(String, String, boolean, Class[])}<br>
+	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}<br>
 	 * <br>
-	 * The <b>methodName</b> will be set to <b>name</b><br>
-	 * The event defaults to being non-cancelable.
+	 * The event defaults to being non-cancelable.<br>
+	 * The default return type is <code>void</code>.
 	 * 
-	 * @param name   The unique name of this event. Further meaning is usage-defined
-	 * @param params The parameter types of the called method for this event. May be of length 0.
-	 */
-	public Event(String name, Class<?>[] params) {
-		this(name, name, false, params);
-	}
-
-	/**
-	 * See {@link Event#Event(String, String, boolean, Class[])}<br>
-	 * <br>
-	 * The event defaults to being non-cancelable.
-	 * 
-	 * @param name       The unique name of this event. Further meaning is usage-defined
 	 * @param methodName The name of the method that should be called when this event occurs
-	 * @param params     The parameter types of the called method for this event. May be of length 0.
+	 * @param params     The parameter types of the called method for this event. May be of length 0
 	 */
-	public Event(String name, String methodName, Class<?>[] params) {
-		this(name, methodName, false, params);
+	public Event(String methodName, Class<?>[] params) {
+		this(methodName, false, params, void.class, false);
+	}
+
+	/**
+	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}<br>
+	 * <br>
+	 * The event defaults to being non-cancelable.
+	 * 
+	 * @param methodName The name of the method that should be called when this event occurs
+	 * @param params     The parameter types of the called method for this event. May be of length 0
+	 * @param returnType The return type of event listener methods
+	 */
+	public Event(String methodName, Class<?>[] params, Class<?> returnType) {
+		this(methodName, false, params, returnType, false);
 	}
 
 	/**
 	 * Creates a general-purpose event object.
 	 * 
-	 * @param name       The unique name of this event. Further meaning is usage-defined
-	 * @param methodName The name of the method that should be called when this event occurs
-	 * @param cancelable Whether this event may be canceled using {@link Event#cancel()}
-	 * @param params     The parameter types of the called method for this event. May be of length 0.
+	 * @param methodName        The name of the method that should be called when this event occurs
+	 * @param cancelable        Whether this event may be canceled using {@link Event#cancel()}
+	 * @param params            The parameter types of the called method for this event. May be of length 0
+	 * @param returnType        The return type of event listener methods
+	 * @param includeAllReturns Include return values from all listener methods instead of just the first. Default is <code>false</code>
 	 */
-	public Event(String name, String methodName, boolean cancelable, Class<?>[] params) {
-		this.name = Objects.requireNonNull(name);
+	public Event(String methodName, boolean cancelable, Class<?>[] params, Class<?> returnType, boolean includeAllReturns) {
 		this.methodName = Objects.requireNonNull(methodName);
 		this.cancelable = cancelable;
 		this.params = Objects.requireNonNull(params);
-		this.eventSignature = Event.createEventSignature(methodName, params);
+		this.returnType = Objects.requireNonNull(returnType);
+		this.includeAllReturns = includeAllReturns;
+
+		this.eventSignature = Event.createEventSignature(methodName, params, returnType);
 	}
 
-
-	/**
-	 * Returns the unique name of this event.
-	 * 
-	 * @return The unique name of this event
-	 */
-	public String getName() {
-		return name;
-	}
 
 	/**
 	 * Returns the method name of this event, which is the name of the method that is called when this event occurs.<br>
@@ -112,6 +96,14 @@ public class Event {
 		return params;
 	}
 
+	public Class<?> getReturnType() {
+		return returnType;
+	}
+
+	public boolean isIncludeAllReturns() {
+		return includeAllReturns;
+	}
+
 	/**
 	 * 
 	 * @return A string containing the method name and a string representation of method parameters
@@ -132,7 +124,7 @@ public class Event {
 
 	public void setCanceled(boolean canceled) {
 		if(canceled && !this.cancelable)
-			throw new UnsupportedOperationException("Event '" + this.name + "' is not cancelable");
+			throw new UnsupportedOperationException("Event '" + this.methodName + "' is not cancelable");
 		this.canceled = canceled;
 	}
 
@@ -175,7 +167,7 @@ public class Event {
 		return types;
 	}
 
-	public static String createEventSignature(String methodName, Class<?>[] params) {
-		return ReflectionUtil.getMethodSignature(void.class, params) + " " + methodName;
+	public static String createEventSignature(String methodName, Class<?>[] params, Class<?> returnType) {
+		return ReflectionUtil.getMethodSignature(returnType, params) + " " + methodName;
 	}
 }

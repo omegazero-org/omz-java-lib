@@ -128,15 +128,44 @@ public class EventBus {
 	 * {@link SubscribeEvent} annotation. The {@link SubscribeEvent} annotation may contain the optional argument {@link SubscribeEvent#priority()}. The handlers with priority
 	 * <i>HIGHEST</i> will be invoked first, the handlers with priority <i>LOWEST</i> will be executed last.<br>
 	 * <br>
-	 * During execution of this event, any handler may cancel the event using {@link Event#cancel()} if {@link Event#isCancelable()} is <b>true</b>, in which case the event will be
-	 * stopped being delivered to subsequent event handlers.
+	 * During execution of this event, any handler may cancel the event using {@link Event#cancel()} if {@link Event#isCancelable()} is <code>true</code>, in which case the
+	 * event will be stopped being delivered to subsequent event handlers.<br>
+	 * <br>
+	 * If and {@link Event#isIncludeAllReturns()} is <code>false</code>, event delivery will be stopped as soon as the first listener returns a non-<code>null</code> value. If
+	 * the event return type is <code>void</code>, all listeners will be attempted to be executed, because <code>void</code> methods effectively always return
+	 * <code>null</code>.<br>
+	 * <br>
+	 * This method may be used instead of {@link EventBus#dispatchEventRes(Event, Object...)} if return types are not needed to save resources, because no
+	 * <code>EventResult</code> object is being created.
 	 * 
 	 * @param event The event to be executed among all subscribers listening to this event
 	 * @param args  Arguments to be passed to event listeners
 	 * @throws EventBusException If an error occurs during execution of an event handler
 	 * @return The number of executed event handlers
+	 * @see EventBus#dispatchEventRes(Event, Object...)
 	 */
 	public int dispatchEvent(Event event, Object... args) {
+		return this.dispatchEvent0(event, null, args);
+	}
+
+	/**
+	 * The behavior of this method is equal to {@link EventBus#dispatchEvent(Event, Object...)}, except that this method also returns the return values of the listener
+	 * methods, wrapped in an {@link EventResult} object.
+	 * 
+	 * @param event The event to be executed among all subscribers listening to this event
+	 * @param args  Arguments to be passed to event listeners
+	 * @throws EventBusException If an error occurs during execution of an event handler
+	 * @return An <code>EventResult</code> object containing data about this event dispatch
+	 * @see EventBus#dispatchEvent(Event, Object...)
+	 */
+	public EventResult dispatchEventRes(Event event, Object... args) {
+		EventResult res = new EventResult();
+		int c = this.dispatchEvent0(event, res, args);
+		res.setListeners(c);
+		return res;
+	}
+
+	private synchronized int dispatchEvent0(Event event, EventResult res, Object[] args) {
 		List<EventBusSubscriber> subs = eventCache.get(event.getEventSignature());
 		if(subs == null){
 			subs = new ArrayList<EventBusSubscriber>();
@@ -161,8 +190,18 @@ public class EventBus {
 		int listeners = 0;
 		for(EventBusSubscriber sub : subs){
 			try{
-				if(sub.dispatchEvent(event, args))
-					listeners++;
+				Object ret = sub.runEvent(event, args);
+				listeners++;
+				if(ret != null){
+					if(event.isIncludeAllReturns()){
+						if(res != null)
+							res.getReturnValues().add(ret);
+					}else{
+						if(res != null)
+							res.setReturnValue(ret);
+						break;
+					}
+				}
 				if(event.isCanceled())
 					break;
 			}catch(Exception e){

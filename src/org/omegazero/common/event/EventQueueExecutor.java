@@ -87,8 +87,8 @@ public class EventQueueExecutor extends EventQueue {
 	}
 
 	/**
-	 * Creates a new EventQueue with built-in executor threads that call {@link EventQueue#execute()}. Additionally, if a task is taking too long to complete and another task was
-	 * queued, another worker thread will be spawned to concurrently execute the new task.<br>
+	 * Creates a new EventQueue with built-in executor threads that call {@link EventQueue#execute()}. Additionally, if a task is taking too long to complete and another task
+	 * was queued, another worker thread will be spawned to concurrently execute the new task.<br>
 	 * <br>
 	 * If <b>daemon</b> is true, the worker threads will be set as daemon threads. Otherwise, {@link EventQueueExecutor#exit()} will need to be explicitly called to complete
 	 * remaining tasks and exit the worker threads.
@@ -184,7 +184,7 @@ public class EventQueueExecutor extends EventQueue {
 	/**
 	 * Sets the error handler that will be called when an error occurs while executing a task in any of the worker threads.<br>
 	 * <br>
-	 * It is recommended this handler be set, otherwise errors will be printed to <code>stderr</code> using {@link Throwable#printStackTrace()} and otherwise ignored.
+	 * If this handler is not set, the worker thread will exit, otherwise, the handler may choose to ignore the error and continue.
 	 * 
 	 * @param errorHandler The error handler
 	 */
@@ -209,11 +209,11 @@ public class EventQueueExecutor extends EventQueue {
 				EventQueueExecutor.this.workingThreads++;
 				try{
 					EventQueueExecutor.this.execute();
-				}catch(Throwable e){
+				}catch(Exception e){
 					if(EventQueueExecutor.this.errorHandler != null)
 						EventQueueExecutor.this.errorHandler.accept(e);
 					else
-						e.printStackTrace();
+						throw e;
 				}
 				EventQueueExecutor.this.workingThreads--;
 			}

@@ -128,7 +128,7 @@ public class EventBusSubscriber {
 		}else{
 			Method[] methods = this.type.getMethods();
 			for(Method m : methods){
-				if(ReflectionUtil.isMethod(m, name, parameterTypes) && m.getReturnType() == returnType && isValidListenerMethod(m)){
+				if(ReflectionUtil.isMethod(m, name, parameterTypes) && (m.getReturnType() == returnType || m.getReturnType() == void.class) && isValidListenerMethod(m)){
 					method = m;
 					break;
 				}

@@ -19,9 +19,9 @@ import java.util.Map;
 
 public class EventBus {
 
-	private final List<EventBusSubscriber> subscribers = new ArrayList<>();
+	private final List<Subscriber> subscribers = new ArrayList<>();
 
-	private final Map<String, List<EventBusSubscriber>> eventCache = new HashMap<>();
+	private final Map<String, List<Subscriber>> eventCache = new HashMap<>();
 
 
 	/**
@@ -32,7 +32,7 @@ public class EventBus {
 	 * @param instance
 	 */
 	public void register(Object instance, String... forcedEvents) {
-		this.register(new EventBusSubscriber(instance), forcedEvents);
+		this.register(new Subscriber(instance), forcedEvents);
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class EventBus {
 	 * @param instance
 	 */
 	public void register(Class<?> type, String... forcedEvents) {
-		this.register(new EventBusSubscriber(type), forcedEvents);
+		this.register(new Subscriber(type), forcedEvents);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class EventBus {
 	 * @param instance
 	 */
 	public void register(Class<?> type, Object instance, String... forcedEvents) {
-		this.register(new EventBusSubscriber(type, instance), forcedEvents);
+		this.register(new Subscriber(type, instance), forcedEvents);
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class EventBus {
 	 * 
 	 * @param subscriber
 	 */
-	public synchronized void register(EventBusSubscriber subscriber, String... forcedEvents) {
+	public synchronized void register(Subscriber subscriber, String... forcedEvents) {
 		if(forcedEvents.length > 0)
 			subscriber.setForcedEvents(forcedEvents);
 		subscribers.add(subscriber);
@@ -166,10 +166,10 @@ public class EventBus {
 	}
 
 	private synchronized int dispatchEvent0(Event event, EventResult res, Object[] args) {
-		List<EventBusSubscriber> subs = eventCache.get(event.getEventSignature());
+		List<Subscriber> subs = eventCache.get(event.getEventSignature());
 		if(subs == null){
-			subs = new ArrayList<EventBusSubscriber>();
-			for(EventBusSubscriber sub : subscribers){
+			subs = new ArrayList<Subscriber>();
+			for(Subscriber sub : subscribers){
 				boolean av = sub.isListenerMethodForEventAvailable(event, args);
 				if(av)
 					subs.add(sub);
@@ -177,10 +177,10 @@ public class EventBus {
 					throw new EventBusException("Subscriber '" + sub.getType().getName() + "' declared itself as listening for event '" + event.getEventSignature()
 							+ "', but no suitable handler method was found");
 			}
-			subs.sort(new Comparator<EventBusSubscriber>(){
+			subs.sort(new Comparator<Subscriber>(){
 
 				@Override
-				public int compare(EventBusSubscriber s1, EventBusSubscriber s2) {
+				public int compare(Subscriber s1, Subscriber s2) {
 					return s2.getListenerMethodForEvent(event, args).getAnnotation(SubscribeEvent.class).priority().value()
 							- s1.getListenerMethodForEvent(event, args).getAnnotation(SubscribeEvent.class).priority().value();
 				}
@@ -188,7 +188,7 @@ public class EventBus {
 			eventCache.put(event.getEventSignature(), subs);
 		}
 		int listeners = 0;
-		for(EventBusSubscriber sub : subs){
+		for(Subscriber sub : subs){
 			try{
 				Object ret = sub.runEvent(event, args);
 				listeners++;

@@ -38,7 +38,11 @@ public class Args implements Serializable {
 
 
 	public String getValue(String key) {
-		return String.valueOf(this.arguments.get(key));
+		Object v = this.arguments.get(key);
+		if(v != null)
+			return v.toString();
+		else
+			return null;
 	}
 
 	public String getValueOrDefault(String key, String def) {

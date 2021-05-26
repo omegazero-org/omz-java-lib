@@ -19,6 +19,8 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
@@ -36,9 +38,12 @@ public class Plugin {
 
 	private ClassLoader classLoader;
 
+	private String id;
 	private String name;
 	private String version;
+	private String description;
 	private String mainClass;
+	private final Map<String, String> additionalOptions = new HashMap<String, String>();
 
 	private Class<?> mainClassType;
 	private Object mainClassInstance;
@@ -86,8 +91,7 @@ public class Plugin {
 	}
 
 	private void loadMetaFile() throws IOException {
-		int namestart = Math.max(this.path.lastIndexOf('/'), this.path.lastIndexOf('\\')) + 1;
-		String filename = this.path.substring(namestart);
+		String filename = Plugin.getFileBaseName(this.path);
 
 		InputStream fileIs = this.tryLoadMetaFile(Plugin.META_FILE_NAME);
 		if(fileIs == null){
@@ -115,17 +119,25 @@ public class Plugin {
 			if(!value.matches("[a-zA-Z0-9\\. \\-_\\+\\(\\)$]+"))
 				throw new InvalidPluginException(this.getName(), "Invalid value '" + value + "'");
 
-			if(key.equals("name")){
+			if(key.equals("id")){
+				if(!value.matches("[a-zA-Z0-9]+"))
+					throw new InvalidPluginException(this.getName(), "Illegal characters in 'id' option");
+				this.id = value;
+			}else if(key.equals("name")){
 				this.name = value;
 			}else if(key.equals("version")){
 				this.version = value;
+			}else if(key.equals("description")){
+				this.description = value;
 			}else if(key.equals("mainClass")){
 				this.mainClass = value;
 			}else{
-				logger.warn(this.path, ": Ignoring invalid option '", key, "' in meta file");
+				this.additionalOptions.put(key, value);
 			}
 		}
 
+		if(this.id == null)
+			throw new InvalidPluginException(this.getName(), "Missing required 'id' option in meta file");
 		if(this.name == null)
 			this.name = filename;
 		if(this.mainClass == null)
@@ -133,20 +145,58 @@ public class Plugin {
 	}
 
 
-	public String getName() {
-		return this.name != null ? this.name : this.path;
+	/**
+	 * The plugin ID is a string given in the plugin metadata file consisting only of upper- or lowercase letters and numbers.<br>
+	 * <br>
+	 * If a {@link PluginManager} is used to load multiple plugins, it will ensure that an ID is unique among all plugins.
+	 * 
+	 * @return The unique ID of this plugin
+	 */
+	public String getId() {
+		return this.id;
 	}
 
+	/**
+	 * Returns the name of this plugin. If no name was set in the metadata file or {@link #init()} was not called, a name will be inferred from the path given in the
+	 * constructor.
+	 * 
+	 * @return The name of this plugin
+	 */
+	public String getName() {
+		return this.name != null ? this.name : Plugin.getFileBaseName(this.path);
+	}
+
+	/**
+	 * 
+	 * @return The version string set in the metadata file or <code>null</code> if none was set
+	 */
 	public String getVersion() {
 		return this.version;
 	}
 
+	/**
+	 * 
+	 * @return A description provided in the metadata file or <code>null</code> if none was provided
+	 */
+	public String getDescription() {
+		return this.description;
+	}
+
+	public String getAdditionalOption(String key) {
+		return this.additionalOptions.get(key);
+	}
+
 
 	public Class<?> getMainClassType() {
-		return mainClassType;
+		return this.mainClassType;
 	}
 
 	public Object getMainClassInstance() {
-		return mainClassInstance;
+		return this.mainClassInstance;
+	}
+
+
+	private static String getFileBaseName(String path) {
+		return path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
 	}
 }

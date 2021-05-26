@@ -100,6 +100,10 @@ public class PluginManager {
 	public void loadPlugin(Path path) throws IOException {
 		Plugin p = new Plugin(path);
 		p.init();
+		for(Plugin e : this.plugins){
+			if(e.getId().equals(p.getId()))
+				throw new InvalidPluginException(e.getName(), "A plugin with id '" + p.getId() + "' already exists");
+		}
 		this.plugins.add(p);
 	}
 

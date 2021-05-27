@@ -31,12 +31,14 @@ public class Plugin {
 
 	private static final String META_FILE_NAME = "plugin.cfg";
 
+	private static PluginClassLoader classLoader = new PluginClassLoader();
+
 	private final File pathFile;
 
 	private final String path;
 	private final boolean directoryPlugin;
 
-	private ClassLoader classLoader;
+	private boolean init = false;
 
 	private String id;
 	private String name;
@@ -64,13 +66,15 @@ public class Plugin {
 
 
 	public void init() {
-		if(this.classLoader != null)
+		if(this.init)
 			return;
+		this.init = true;
 		try{
-			this.classLoader = new URLClassLoader(new URL[] { this.pathFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+			//this.classLoader = new URLClassLoader(new URL[] { this.pathFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+			Plugin.classLoader.addURL(this.pathFile.toURI().toURL());
 			this.loadMetaFile();
 			logger.debug(this.getName(), ": Loading main class ", this.mainClass);
-			this.mainClassType = Class.forName(this.mainClass, true, this.classLoader);
+			this.mainClassType = Class.forName(this.mainClass, true, Plugin.classLoader);
 			this.mainClassInstance = this.mainClassType.newInstance();
 		}catch(IOException | ReflectiveOperationException e){
 			throw new RuntimeException("Error while loading plugin at '" + this.path + "'", e);
@@ -116,16 +120,15 @@ public class Plugin {
 			String value = p[1].trim();
 			if(!key.matches("[a-zA-Z0-9]+"))
 				throw new InvalidPluginException(this.getName(), "Invalid key '" + key + "'");
-			if(!value.matches("[a-zA-Z0-9\\. \\-_\\+\\(\\)$]+"))
-				throw new InvalidPluginException(this.getName(), "Invalid value '" + value + "'");
 
 			if(key.equals("id")){
-				if(!value.matches("[a-zA-Z0-9]+"))
-					throw new InvalidPluginException(this.getName(), "Illegal characters in 'id' option");
+				this.validateValue(key, value, "[a-zA-Z0-9]+");
 				this.id = value;
 			}else if(key.equals("name")){
+				this.validateValue(key, value, "[a-zA-Z0-9\\. \\-_\\+\\(\\)$]+");
 				this.name = value;
 			}else if(key.equals("version")){
+				this.validateValue(key, value, "[a-zA-Z0-9\\.\\-_]+");
 				this.version = value;
 			}else if(key.equals("description")){
 				this.description = value;
@@ -142,6 +145,11 @@ public class Plugin {
 			this.name = filename;
 		if(this.mainClass == null)
 			throw new InvalidPluginException(this.getName(), "Missing required 'mainClass' option in meta file");
+	}
+
+	private void validateValue(String key, String value, String regex) {
+		if(!value.matches(regex))
+			throw new InvalidPluginException(this.getName(), "Illegal characters in '" + key + "' option");
 	}
 
 
@@ -198,5 +206,17 @@ public class Plugin {
 
 	private static String getFileBaseName(String path) {
 		return path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
+	}
+
+	private static class PluginClassLoader extends URLClassLoader {
+
+		public PluginClassLoader() {
+			super(new URL[0], ClassLoader.getSystemClassLoader());
+		}
+
+		@Override
+		public void addURL(URL url) {
+			super.addURL(url);
+		}
 	}
 }

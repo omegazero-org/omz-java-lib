@@ -59,7 +59,7 @@ public class JSONConfiguration implements Configuration {
 			}else if(type == double.class || type == Double.class){
 				return ((Number) obj).doubleValue();
 			}else if(type == String.class){
-				return obj;
+				return String.valueOf(obj);
 			}else
 				return null;
 		}catch(ClassCastException e){
@@ -95,8 +95,8 @@ public class JSONConfiguration implements Configuration {
 	/**
 	 * {@inheritDoc}<br>
 	 * <br>
-	 * The JSON file that was parsed in the constructor is read and fields that have the {@link ConfigurationOption} annotation will be populated if the JSON file contains a key
-	 * with the same name as the field. Additional keys in the JSON file that have no corresponding field are ignored.<br>
+	 * The JSON file that was parsed in the constructor is read and fields that have the {@link ConfigurationOption} annotation will be populated if the JSON file contains a
+	 * key with the same name as the field. Additional keys in the JSON file that have no corresponding field are ignored.<br>
 	 * If the value of a key is a different type than the field type, an <code>IllegalArgumentException</code> is thrown.<br>
 	 * <br>
 	 * Supported field types are <code>String</code>, any primitive type and {@link List}s of <code>String</code>s or primitive types. If the field type is not supported, the
@@ -123,7 +123,9 @@ public class JSONConfiguration implements Configuration {
 					}else{
 						Object data = this.json.get(name);
 						Object value = this.convertValueOfObject(data, f.getType(), name);
-						if(value != null){
+						if(data == JSONObject.NULL){
+							f.set(this, null);
+						}else if(value != null){
 							f.set(this, value);
 						}else if(!this.setUnsupportedField(f, data)){
 							throw new UnsupportedOperationException("Field '" + name + "' is of unsupported type '" + f.getType() + "'");

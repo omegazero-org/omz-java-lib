@@ -240,12 +240,14 @@ public class TaskScheduler {
 			this.args = args;
 		}
 
-		public void unref() {
+		public TimerTask daemon() {
 			this.daemon = true;
+			return this;
 		}
 
-		public void ref() {
+		public TimerTask undaemon() {
 			this.daemon = false;
+			return this;
 		}
 
 		protected void run() {

@@ -54,7 +54,8 @@ public final class LoggerUtil {
 	 * {@link LoggerUtil#close()} is called. This may be disabled using {@link LoggerUtil#setSyncFlush(boolean)} by setting it to <b>true</b>.<br>
 	 * The log buffer may be flushed explicitly using {@link LoggerUtil#flushLogBuffer()}.
 	 * 
-	 * @param level The maximum log level for log messages. Log messages higher than this will be omitted. May be <b>null</b>, in which case it will be set to {@link LogLevel#INFO}
+	 * @param level The maximum log level for log messages. Log messages higher than this will be omitted. May be <b>null</b>, in which case it will be set to
+	 *              {@link LogLevel#INFO}
 	 * @param file  The file name to save log messages to. May be <b>null</b> to disable disk saving
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
@@ -68,7 +69,7 @@ public final class LoggerUtil {
 		LoggerUtil.logSaveInterval = Tasks.interval((args) -> {
 			LoggerUtil.flushLogBuffer();
 		}, SAVE_INTERVAL);
-		LoggerUtil.logSaveInterval.unref();
+		LoggerUtil.logSaveInterval.daemon();
 	}
 
 	/**
@@ -130,8 +131,8 @@ public final class LoggerUtil {
 	}
 
 	/**
-	 * If set to <b>true</b>, all log messages created using a {@link Logger} will be printed to the default <code>System.err</code> instead of the default <code>System.out</code>.
-	 * Set the output stream where all log messages using a {@link Logger} will be printed to.
+	 * If set to <b>true</b>, all log messages created using a {@link Logger} will be printed to the default <code>System.err</code> instead of the default
+	 * <code>System.out</code>. Set the output stream where all log messages using a {@link Logger} will be printed to.
 	 * 
 	 * @param u If loggers should use <code>stderr</code> for log messages
 	 * @throws SecurityException If a security manager is present and does not allow reassignment of the logger output stream

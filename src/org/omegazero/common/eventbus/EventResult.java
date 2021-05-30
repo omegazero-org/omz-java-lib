@@ -9,7 +9,7 @@
  * is free of defects, merchantable, fit for a particular purpose or non-infringing.
  * The entire risk as to the quality and performance of the Covered Software is with You.
  */
-package org.omegazero.common.event.bus;
+package org.omegazero.common.eventbus;
 
 import java.util.ArrayList;
 import java.util.List;

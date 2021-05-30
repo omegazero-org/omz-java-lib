@@ -121,10 +121,10 @@ public class EventQueueExecutor extends EventQueue {
 	public synchronized void checkWorkers() {
 		if(!this.running)
 			return;
-		if(super.isTaskQueued() && workingThreads >= workerThreads.size() && workerThreads.size() < maxThreads){
+		if(super.isTaskQueued() && this.workingThreads >= this.workerThreads.size() && this.workerThreads.size() < this.maxThreads){
 			WorkerThread thread = new WorkerThread();
 			thread.start();
-			workerThreads.add(thread);
+			this.workerThreads.add(thread);
 		}
 	}
 
@@ -136,7 +136,7 @@ public class EventQueueExecutor extends EventQueue {
 	 * @see EventQueueExecutor#exit(boolean)
 	 */
 	public void exit() {
-		exit(false);
+		this.exit(false);
 	}
 
 	/**
@@ -146,9 +146,12 @@ public class EventQueueExecutor extends EventQueue {
 	 */
 	public void exit(boolean blocking) {
 		synchronized(this){
+			if(!this.running)
+				return;
 			this.running = false;
 			for(WorkerThread thread : workerThreads){
-				thread.interrupt();
+				if(!thread.executing)
+					thread.interrupt();
 			}
 			this.notifyAll();
 		}
@@ -170,7 +173,7 @@ public class EventQueueExecutor extends EventQueue {
 	 * @return The maximum number of worker threads allowed to be created
 	 */
 	public int getMaxThreads() {
-		return maxThreads;
+		return this.maxThreads;
 	}
 
 	/**
@@ -178,7 +181,7 @@ public class EventQueueExecutor extends EventQueue {
 	 * @return Number of running worker threads
 	 */
 	public int getWorkerThreadCount() {
-		return workerThreads.size();
+		return this.workerThreads.size();
 	}
 
 	/**
@@ -195,6 +198,8 @@ public class EventQueueExecutor extends EventQueue {
 
 	public class WorkerThread extends Thread {
 
+		private boolean executing = false;
+
 		public WorkerThread() {
 			int counter = threadCounter.containsKey(EventQueueExecutor.this.threadName) ? threadCounter.get(EventQueueExecutor.this.threadName) : 0;
 			super.setName(EventQueueExecutor.this.threadName + "-" + (counter++));
@@ -207,6 +212,7 @@ public class EventQueueExecutor extends EventQueue {
 			while(EventQueueExecutor.this.running || EventQueueExecutor.this.isTaskQueued()){
 				EventQueueExecutor.this.waitForTask();
 				EventQueueExecutor.this.workingThreads++;
+				this.executing = true;
 				try{
 					EventQueueExecutor.this.execute();
 				}catch(Exception e){
@@ -215,6 +221,7 @@ public class EventQueueExecutor extends EventQueue {
 					else
 						throw e;
 				}
+				this.executing = false;
 				EventQueueExecutor.this.workingThreads--;
 			}
 		}

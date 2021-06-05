@@ -18,12 +18,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
 
-public class PluginManager {
+public class PluginManager implements Iterable<Plugin> {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
@@ -115,7 +114,22 @@ public class PluginManager {
 		return this.plugins.size();
 	}
 
-	public void forEachPlugin(Consumer<Plugin> action) {
-		this.plugins.forEach(action);
+
+	@Override
+	public Iterator<Plugin> iterator() {
+		return new Iterator<Plugin>(){
+
+			private int index = 0;
+
+			@Override
+			public boolean hasNext() {
+				return this.index < PluginManager.this.plugins.size();
+			}
+
+			@Override
+			public Plugin next() {
+				return PluginManager.this.plugins.get(this.index++);
+			}
+		};
 	}
 }

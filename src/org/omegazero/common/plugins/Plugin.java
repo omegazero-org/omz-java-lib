@@ -122,7 +122,7 @@ public class Plugin {
 				throw new InvalidPluginException(this.getName(), "Invalid key '" + key + "'");
 
 			if(key.equals("id")){
-				this.validateValue(key, value, "[a-zA-Z0-9]+");
+				this.validateValue(key, value, "[a-zA-Z0-9_\\-]+");
 				this.id = value;
 			}else if(key.equals("name")){
 				this.validateValue(key, value, "[a-zA-Z0-9\\. \\-_\\+\\(\\)$]+");

@@ -18,29 +18,32 @@ import java.io.PrintStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
-import org.omegazero.common.event.TaskScheduler.TimerTask;
 import org.omegazero.common.event.Tasks;
+import org.omegazero.common.util.PropertyUtil;
 
 public final class LoggerUtil {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
-	private static final int SAVE_INTERVAL = 300000;
-	private static final int LOG_BUFFER_MAX = 1024;
+	public static final int SAVE_INTERVAL = PropertyUtil.getInt("org.omegazero.common.logging.saveInterval", 300) * 1000;
+	public static final int LOG_BUFFER_MAX = PropertyUtil.getInt("org.omegazero.common.logging.logBufferSize", 1024);
 
 	private static final RuntimePermission SET_LOGGER_UTIL_SETTINGS_PERMISSION = new RuntimePermission("setLoggerUtilSettings");
 	private static final RuntimePermission SET_LOGGER_OUT_PERMISSION = new RuntimePermission("setLoggerOut");
+	private static final RuntimePermission LOG_LISTENER_PERMISSION = new RuntimePermission("logListener");
 
 	private static String logFile = null;
 	private static LogLevel logLevel = LogLevel.INFO;
 
 	private static boolean syncFlush = false;
-	private static TimerTask logSaveInterval = null;
-	private static List<String> logBuffer = new ArrayList<>();
+	private static List<String> logBuffer = new ArrayList<>(LOG_BUFFER_MAX);
 
-	private static final PrintStream sysOut = System.out;
-	private static final PrintStream sysErr = System.err;
+	private static final List<BiConsumer<LogLevel, String>> listeners = new ArrayList<>();
+
+	public static final PrintStream sysOut = System.out;
+	public static final PrintStream sysErr = System.err;
 	private static PrintStream loggerOut = sysOut;
 
 	private LoggerUtil() {
@@ -52,7 +55,8 @@ public final class LoggerUtil {
 	 * <br>
 	 * To reduce disk writes and increase logging speed, by default, log messages will only be saved every 5 minutes, if the logger buffer is full or when
 	 * {@link LoggerUtil#close()} is called. This may be disabled using {@link LoggerUtil#setSyncFlush(boolean)} by setting it to <b>true</b>.<br>
-	 * The log buffer may be flushed explicitly using {@link LoggerUtil#flushLogBuffer()}.
+	 * The log buffer may be flushed explicitly using {@link LoggerUtil#flushLogBuffer()}. The save interval may be changed using the
+	 * <code>org.omegazero.common.logging.saveInterval</code> system property by setting it to a number representing the time in seconds before this class is used.
 	 * 
 	 * @param level The maximum log level for log messages. Log messages higher than this will be omitted. May be <b>null</b>, in which case it will be set to
 	 *              {@link LogLevel#INFO}
@@ -61,32 +65,32 @@ public final class LoggerUtil {
 	 */
 	public static void init(LogLevel level, String file) {
 		checkLoggerSettingsPermission();
+
 		if(level != null)
 			LoggerUtil.logLevel = level;
 		else
 			LoggerUtil.logLevel = LogLevel.INFO;
+
 		LoggerUtil.logFile = file;
-		LoggerUtil.logSaveInterval = Tasks.interval((args) -> {
-			LoggerUtil.flushLogBuffer();
-		}, SAVE_INTERVAL);
-		LoggerUtil.logSaveInterval.daemon();
+		if(file != null){
+			Tasks.interval((args) -> {
+				LoggerUtil.flushLogBuffer();
+			}, SAVE_INTERVAL).daemon();
+		}
 	}
 
 	/**
-	 * Saves the log buffer and, the log save interval and resets the LoggerUtil.
+	 * Saves the log buffer and resets the LoggerUtil.
 	 * 
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static void close() {
 		checkLoggerSettingsPermission();
-		if(LoggerUtil.logSaveInterval != null)
-			Tasks.clear(LoggerUtil.logSaveInterval);
 		if(LoggerUtil.logFile != null){
 			logger.info("Saving log to '" + logFile + "'");
 			LoggerUtil.flushLogBuffer();
 		}
 		LoggerUtil.logFile = null;
-		LoggerUtil.logSaveInterval = null;
 	}
 
 
@@ -107,15 +111,17 @@ public final class LoggerUtil {
 
 
 	protected static void checkLoggerSettingsPermission() {
-		SecurityManager sm = System.getSecurityManager();
-		if(sm != null)
-			sm.checkPermission(SET_LOGGER_UTIL_SETTINGS_PERMISSION);
+		checkPermission(SET_LOGGER_UTIL_SETTINGS_PERMISSION);
 	}
 
 	protected static void checkLoggerIOPermission() {
+		checkPermission(SET_LOGGER_OUT_PERMISSION);
+	}
+
+	protected static void checkPermission(java.security.Permission perm) {
 		SecurityManager sm = System.getSecurityManager();
 		if(sm != null)
-			sm.checkPermission(SET_LOGGER_OUT_PERMISSION);
+			sm.checkPermission(perm);
 	}
 
 	/**
@@ -143,6 +149,24 @@ public final class LoggerUtil {
 			LoggerUtil.loggerOut = LoggerUtil.sysErr;
 		else
 			LoggerUtil.loggerOut = LoggerUtil.sysOut;
+	}
+
+	/**
+	 * Adds a log listener. A log listener is called every time a log message is generated on any log level, even if the log level is disabled.<br>
+	 * <br>
+	 * The callback receives two arguments:
+	 * <ul>
+	 * <li><code>LogLevel</code> - The log level on which the log message was generated.</li>
+	 * <li><code>String</code> - The already formatted string, as it is printed to the output stream and the log file. Does not contain control characters for log
+	 * coloring.</li>
+	 * </ul>
+	 * 
+	 * @param listener The callback
+	 * @throws SecurityException If a security manager is present and does not allow adding log listeners
+	 */
+	public static void addLogListener(BiConsumer<LogLevel, String> listener) {
+		checkPermission(LOG_LISTENER_PERMISSION);
+		LoggerUtil.listeners.add(listener);
 	}
 
 
@@ -175,6 +199,11 @@ public final class LoggerUtil {
 		LoggerUtil.loggerOut.println(o);
 	}
 
+	protected static synchronized void logToListeners(LogLevel logLevel, String s) {
+		for(BiConsumer<LogLevel, String> l : LoggerUtil.listeners)
+			l.accept(logLevel, s);
+	}
+
 
 	/**
 	 * Searches the log level referenced by the given String, either by log level number or log level name.
@@ -200,6 +229,20 @@ public final class LoggerUtil {
 	public static void setSyncFlush(boolean syncFlush) {
 		checkLoggerSettingsPermission();
 		LoggerUtil.syncFlush = syncFlush;
+	}
+
+	/**
+	 * Sets the log level to the given value and returns the previous value.
+	 * 
+	 * @param logLevel The new log level
+	 * @return The previous log level
+	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
+	 */
+	public static LogLevel setLogLevel(LogLevel logLevel) {
+		checkLoggerSettingsPermission();
+		LogLevel prev = LoggerUtil.logLevel;
+		LoggerUtil.logLevel = logLevel;
+		return prev;
 	}
 
 	/**

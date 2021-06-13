@@ -58,6 +58,8 @@ public class JSONConfiguration implements Configuration {
 				return ((Number) obj).floatValue();
 			}else if(type == double.class || type == Double.class){
 				return ((Number) obj).doubleValue();
+			}else if(type == boolean.class || type == Boolean.class){
+				return (boolean) obj;
 			}else if(type == String.class){
 				return String.valueOf(obj);
 			}else

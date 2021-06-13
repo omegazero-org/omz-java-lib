@@ -36,16 +36,6 @@ public class TaskScheduler {
 	 * Creates a TaskScheduler and starts the background execution thread.
 	 */
 	public TaskScheduler() {
-		Thread shutdownThread = new Thread(){
-
-			@Override
-			public void run() {
-				TaskScheduler.this.exit();
-			}
-		};
-		shutdownThread.setName("TaskSchedulerShutdownThread");
-		Runtime.getRuntime().addShutdownHook(shutdownThread);
-
 		Thread executionThread = new Thread(){
 
 			@Override
@@ -192,7 +182,7 @@ public class TaskScheduler {
 
 	/**
 	 * 
-	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#unref()} or if there are no queued tasks.
+	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks.
 	 */
 	public boolean isAllDaemon() {
 		for(int i = 0; i < queue.size(); i++){
@@ -206,18 +196,44 @@ public class TaskScheduler {
 
 
 	/**
-	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future) and exiting the worker threads.<br>
-	 * The caller thread is blocked until all worker threads have exited.
+	 * Equivalent to a call to:
+	 * 
+	 * <pre>
+	 * {@link #exit(boolean) exit(false)}
+	 * </pre>
 	 */
 	public void exit() {
-		if(!this.running)
-			return;
-		this.running = false;
+		this.exit(false);
+	}
+
+	/**
+	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future) and exiting the worker threads.<br>
+	 * <br>
+	 * If <b>blocking</b> is <code>true</code>, the caller thread is blocked until all remaining tasks are run and all worker threads have exited; otherwise, the shutdown
+	 * procedure is run by a separate thread.
+	 * 
+	 * @param blocking Whether the call to this method should block until the shutdown procedure is complete
+	 */
+	public void exit(boolean blocking) {
+		synchronized(this){
+			if(!this.running)
+				return;
+			this.running = false;
+		}
+		if(blocking){
+			this.exit0();
+		}else{
+			Thread shutdownThread = new Thread(this::exit0, "TaskSchedulerShutdownThread");
+			shutdownThread.start();
+		}
+	}
+
+	private void exit0() {
 		synchronized(queue){
 			queue.notify();
 		}
-		TaskScheduler.this.execute(false);
-		TaskScheduler.this.executor.exit(true);
+		this.execute(false);
+		this.executor.exit(true);
 	}
 
 

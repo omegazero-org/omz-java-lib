@@ -117,11 +117,17 @@ public class JSONConfiguration implements Configuration {
 						ParameterizedType pt = (ParameterizedType) f.getGenericType();
 						Class<?> genericType = (Class<?>) pt.getActualTypeArguments()[0];
 						List<?> l = this.getArrayListOfType(genericType);
+						f.set(this, l);
 						JSONArray jsonArray = this.json.getJSONArray(name);
 						for(int i = 0; i < jsonArray.length(); i++){
-							JSONConfiguration.this.addToList(l, JSONConfiguration.this.convertValueOfObject(jsonArray.get(i), genericType, name + "[" + i + "]"));
+							Object o = JSONConfiguration.this.convertValueOfObject(jsonArray.get(i), genericType, name + "[" + i + "]");
+							if(o == null){ // the generic type of this list is not supported
+								this.setUnsupportedField(f, jsonArray);
+								break;
+							}else if(o == JSONObject.NULL)
+								o = null;
+							JSONConfiguration.this.addToList(l, o);
 						}
-						f.set(this, l);
 					}else{
 						Object data = this.json.get(name);
 						Object value = this.convertValueOfObject(data, f.getType(), name);

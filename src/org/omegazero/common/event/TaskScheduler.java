@@ -187,7 +187,7 @@ public class TaskScheduler {
 	public boolean isAllDaemon() {
 		for(int i = 0; i < queue.size(); i++){
 			TimerTask t = queue.get(i);
-			if(!t.daemon){
+			if(!t.daemon && !t.canceled){
 				return false;
 			}
 		}

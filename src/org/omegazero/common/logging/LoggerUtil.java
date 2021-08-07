@@ -100,7 +100,11 @@ public final class LoggerUtil {
 	 * @return The new logger instance
 	 */
 	public static Logger createLogger() {
-		StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+		return createLogger(0);
+	}
+
+	protected static Logger createLogger(int off) {
+		StackTraceElement ste = Thread.currentThread().getStackTrace()[3 + off];
 		String[] str = ste.getClassName().split("\\.");
 		return new Logger(str[str.length - 1]);
 	}

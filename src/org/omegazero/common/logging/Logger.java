@@ -74,4 +74,28 @@ public final class Logger {
 		LoggerUtil.logToStdout(level.color() + s + "\u001b[0m");
 		LoggerUtil.addLogToBuffer(s);
 	}
+
+
+	/**
+	 * Utility function to check if debugging is enabled.
+	 * 
+	 * @return <code>true</code> if the current log level is {@link LogLevel#DEBUG} or higher
+	 * @since 2.3
+	 */
+	public boolean debug() {
+		return LoggerUtil.getLogLevel().level() >= LogLevel.DEBUG.level();
+	}
+
+
+	/**
+	 * Creates a new logger bound to the calling class.<br>
+	 * <br>
+	 * This function is equivalent to {@link LoggerUtil#createLogger()}.
+	 * 
+	 * @return The new logger instance
+	 * @since 2.3
+	 */
+	public static Logger create() {
+		return LoggerUtil.createLogger(0);
+	}
 }

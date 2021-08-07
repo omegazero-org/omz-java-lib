@@ -26,15 +26,15 @@ public enum LogLevel {
 	}
 
 	public int level() {
-		return level;
+		return this.level;
 	}
 
 	@Override
 	public String toString() {
-		return label;
+		return this.label;
 	}
 
 	public String color() {
-		return color;
+		return this.color;
 	}
 }

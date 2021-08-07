@@ -41,6 +41,7 @@ public final class LoggerUtil {
 	private static List<String> logBuffer = new ArrayList<>(LOG_BUFFER_MAX);
 
 	private static final List<BiConsumer<LogLevel, String>> listeners = new ArrayList<>();
+	private static final List<BiConsumer<LogLevel, String>> listenersFine = new ArrayList<>();
 
 	public static final PrintStream sysOut = System.out;
 	public static final PrintStream sysErr = System.err;
@@ -156,7 +157,8 @@ public final class LoggerUtil {
 	}
 
 	/**
-	 * Adds a log listener. A log listener is called every time a log message is generated on any log level, even if the log level is disabled.<br>
+	 * Adds a log listener. A log listener is called every time a log message is generated on an enabled log level. To receive all log messages regardless of the configured
+	 * log level, use {@link #addFineLogListener(BiConsumer)} instead.<br>
 	 * <br>
 	 * The callback receives two arguments:
 	 * <ul>
@@ -171,6 +173,19 @@ public final class LoggerUtil {
 	public static void addLogListener(BiConsumer<LogLevel, String> listener) {
 		checkPermission(LOG_LISTENER_PERMISSION);
 		LoggerUtil.listeners.add(listener);
+	}
+
+	/**
+	 * Same as {@link #addLogListener(BiConsumer)}, except that listeners added here will receive <i>all</i> log messages, regardless of the configured log level. Note that
+	 * this may slow down the application because all log messages need to be generated, instead of only ones below the configured log level.
+	 * 
+	 * @param listener The callback
+	 * @throws SecurityException If a security manager is present and does not allow adding log listeners
+	 * @since 2.3
+	 */
+	public static void addFineLogListener(BiConsumer<LogLevel, String> listener) {
+		checkPermission(LOG_LISTENER_PERMISSION);
+		LoggerUtil.listenersFine.add(listener);
 	}
 
 
@@ -204,8 +219,16 @@ public final class LoggerUtil {
 	}
 
 	protected static synchronized void logToListeners(LogLevel logLevel, String s) {
-		for(BiConsumer<LogLevel, String> l : LoggerUtil.listeners)
+		if(LoggerUtil.logLevel.level() >= logLevel.level()){
+			for(BiConsumer<LogLevel, String> l : LoggerUtil.listeners)
+				l.accept(logLevel, s);
+		}
+		for(BiConsumer<LogLevel, String> l : LoggerUtil.listenersFine)
 			l.accept(logLevel, s);
+	}
+
+	protected static boolean needAllLogMessages() {
+		return LoggerUtil.listenersFine.size() > 0;
 	}
 
 

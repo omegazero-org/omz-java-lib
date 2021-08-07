@@ -51,6 +51,9 @@ public final class Logger {
 
 
 	public void log(LogLevel level, Object[] obj) {
+		boolean logLevelDisabled = LoggerUtil.getLogLevel().level() < level.level();
+		if(!LoggerUtil.needAllLogMessages() && logLevelDisabled)
+			return;
 		StringBuilder sb = new StringBuilder(32);
 		sb.append(Util.getFormattedTime()).append(' ');
 		sb.append('[').append(level).append(']').append(' ');
@@ -69,7 +72,7 @@ public final class Logger {
 		}
 		String s = sb.toString();
 		LoggerUtil.logToListeners(level, s);
-		if(LoggerUtil.getLogLevel().level() < level.level())
+		if(logLevelDisabled)
 			return;
 		LoggerUtil.logToStdout(level.color() + s + "\u001b[0m");
 		LoggerUtil.addLogToBuffer(s);

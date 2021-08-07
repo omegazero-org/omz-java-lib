@@ -11,6 +11,10 @@
  */
 package org.omegazero.common.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 public final class ArrayUtil {
 
 	private ArrayUtil() {
@@ -55,5 +59,41 @@ public final class ArrayUtil {
 				return i;
 		}
 		return -1;
+	}
+
+
+	/**
+	 * Reads all remaining data from the input stream (<b>is</b>) until end-of-file is reached, the VM runs out of memory or the maximum array size is reached. To limit the
+	 * amount of bytes to read, use {@link #readInputStreamToByteArray(InputStream, int)} instead.
+	 * 
+	 * @param is The input stream
+	 * @return The byte array containing all data read from the input stream
+	 * @throws IOException If an IO error occurs
+	 * @since 2.3
+	 */
+	public static byte[] readInputStreamToByteArray(InputStream is) throws IOException {
+		return readInputStreamToByteArray(is, 0);
+	}
+
+	/**
+	 * Reads all remaining data from the input stream (<b>is</b>) until end-of-file is reached or the amount of bytes read exceeds the <b>limit</b>.
+	 * 
+	 * @param is    The input stream
+	 * @param limit The maximum amount of bytes to read before the read operation is canceled. May be 0 read any amount of bytes
+	 * @return The byte array containing all data read from the input stream
+	 * @throws IOException               If an IO error occurs
+	 * @throws IndexOutOfBoundsException If the amount of bytes read exceeds <b>limit</b>
+	 * @since 2.3
+	 */
+	public static byte[] readInputStreamToByteArray(InputStream is, int limit) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buffer = new byte[8192];
+		int read;
+		while((read = is.read(buffer)) != -1){
+			baos.write(buffer, 0, read);
+			if(limit > 0 && baos.size() > limit)
+				throw new IndexOutOfBoundsException("Maximum size exceeded: " + baos.size() + "/" + limit);
+		}
+		return baos.toByteArray();
 	}
 }

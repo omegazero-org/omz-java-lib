@@ -15,7 +15,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -62,6 +65,10 @@ public class JSONConfiguration implements Configuration {
 				return (boolean) obj;
 			}else if(type == String.class){
 				return String.valueOf(obj);
+			}else if(type == ConfigObject.class){
+				return convertJSONObject((JSONObject) obj);
+			}else if(type == ConfigArray.class){
+				return convertJSONArray((JSONArray) obj);
 			}else
 				return null;
 		}catch(ClassCastException e){
@@ -101,9 +108,9 @@ public class JSONConfiguration implements Configuration {
 	 * key with the same name as the field. Additional keys in the JSON file that have no corresponding field are ignored.<br>
 	 * If the value of a key is a different type than the field type, an <code>IllegalArgumentException</code> is thrown.<br>
 	 * <br>
-	 * Supported field types are <code>String</code>, any primitive type and {@link List}s of <code>String</code>s or primitive types. If the field type is not supported, the
-	 * overridable method {@link JSONConfiguration#setUnsupportedField(Field, Object)} is called. If this method is not implemented or returns <code>false</code> (the default
-	 * behavior), an <code>UnsupportedOperationException</code> is thrown.
+	 * Supported field types are <code>ConfigObject</code>, <code>ConfigArray</code>, <code>String</code>, any primitive type and {@link List}s of the mentioned types. If the
+	 * field type is not supported, the overridable method {@link JSONConfiguration#setUnsupportedField(Field, Object)} is called. If this method is not implemented or returns
+	 * <code>false</code> (the default behavior), an <code>UnsupportedOperationException</code> is thrown.
 	 */
 	@Override
 	public void load() throws IOException {
@@ -144,5 +151,56 @@ public class JSONConfiguration implements Configuration {
 		}catch(ReflectiveOperationException e){
 			throw new IOException("Reflective operation failed", e);
 		}
+	}
+
+
+	/**
+	 * Converts the given {@link JSONObject} to a {@link ConfigObject}.
+	 * 
+	 * @param json The <code>JSONObject</code> to convert
+	 * @return The resulting <code>ConfigObject</code>
+	 * @since 2.4
+	 */
+	public static ConfigObject convertJSONObject(JSONObject json) {
+		Map<String, Object> data = new HashMap<>();
+		for(String k : json.keySet()){
+			data.put(k, convertJSONValue(json.get(k)));
+		}
+		return new ConfigObject(data);
+	}
+
+	/**
+	 * Converts the given {@link JSONArray} to a {@link ConfigArray}.
+	 * 
+	 * @param json The <code>JSONArray</code> to convert
+	 * @return The resulting <code>ConfigArray</code>
+	 * @since 2.4
+	 */
+	public static ConfigArray convertJSONArray(JSONArray json) {
+		List<Object> cdata = new ArrayList<>(json.length());
+		Iterator<Object> data = json.iterator();
+		while(data.hasNext())
+			cdata.add(convertJSONValue(data.next()));
+		return new ConfigArray(cdata);
+	}
+
+	/**
+	 * Converts the given, possibly JSON-specific, object <b>v</b> to an abstracted data representation.
+	 * 
+	 * @param v The object to convert
+	 * @return The resulting object
+	 * @since 2.4
+	 * @see #convertJSONObject(JSONObject)
+	 * @see #convertJSONArray(JSONArray)
+	 */
+	public static Object convertJSONValue(Object v) {
+		if(v instanceof JSONObject){
+			return convertJSONObject((JSONObject) v);
+		}else if(v instanceof JSONArray){
+			return convertJSONArray((JSONArray) v);
+		}else if(v == JSONObject.NULL)
+			return null;
+		else
+			return v;
 	}
 }

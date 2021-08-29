@@ -16,7 +16,7 @@ import org.omegazero.common.logging.LoggerUtil;
 
 public class OmzLib {
 
-	public static final String VERSION = "2.3";
+	public static final String VERSION = "2.4";
 
 
 	private static final Logger logger = LoggerUtil.createLogger();

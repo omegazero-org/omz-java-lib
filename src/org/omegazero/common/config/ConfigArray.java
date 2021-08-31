@@ -54,6 +54,22 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 	}
 
 
+	/**
+	 * Creates a new <code>ConfigArray</code> that contains all values of this and the given <code>ConfigArray</code>. Values of this <code>ConfigArray</code> are added first,
+	 * followed by values in the provided <code>ConfigArray</code>.<br>
+	 * Both provided objects stay unchanged.
+	 * 
+	 * @param other The <code>ConfigArray</code> to merge this one with
+	 * @return A new <code>ConfigArray</code> with all values of this and <b>other</b>
+	 */
+	public ConfigArray merge(ConfigArray other) {
+		List<Object> newData = new ArrayList<>(this.data.size() + other.data.size());
+		newData.addAll(this.data);
+		newData.addAll(other.data);
+		return new ConfigArray(newData);
+	}
+
+
 	public int size() {
 		return this.data.size();
 	}

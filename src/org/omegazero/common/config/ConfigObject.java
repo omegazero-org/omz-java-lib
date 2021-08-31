@@ -115,6 +115,22 @@ public class ConfigObject implements Serializable {
 
 
 	/**
+	 * Creates a new <code>ConfigObject</code> that contains all properties of this and the given <code>ConfigObject</code>. If both have a property with the same key, the
+	 * value of the property in the given <code>ConfigObject</code> is put into the new <code>ConfigObject</code>.<br>
+	 * Both provided objects stay unchanged.
+	 * 
+	 * @param other The <code>ConfigObject</code> to merge this one with, possibly overriding values of this <code>ConfigObject</code>
+	 * @return A new <code>ConfigObject</code> with values merged from this and <b>other</b>
+	 */
+	public ConfigObject merge(ConfigObject other) {
+		Map<String, Object> newData = new HashMap<>(this.data.size() + other.data.size());
+		newData.putAll(this.data);
+		newData.putAll(other.data);
+		return new ConfigObject(newData);
+	}
+
+
+	/**
 	 * Returns a value associated with the given <b>key</b> in this <code>ConfigObject</code>, or <code>null</code> if the given key has no value set. Note that a return value
 	 * of <code>null</code> may also indicate that the given key is explicitly mapped to <code>null</code>.<br>
 	 * <br>

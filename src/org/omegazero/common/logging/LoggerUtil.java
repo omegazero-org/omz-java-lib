@@ -20,6 +20,7 @@ import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.omegazero.common.event.Tasks;
@@ -44,6 +45,8 @@ public final class LoggerUtil {
 
 	private static boolean syncFlush = false;
 	private static List<String> logBuffer = new ArrayList<>(LOG_BUFFER_MAX);
+
+	private static final Set<String> mutedLoggers = new java.util.HashSet<>();
 
 	private static final List<BiConsumer<LogLevel, String>> listeners = new ArrayList<>();
 	private static final List<BiConsumer<LogLevel, String>> listenersFine = new ArrayList<>();
@@ -104,6 +107,7 @@ public final class LoggerUtil {
 	 * Creates a new logger bound to the calling class.
 	 * 
 	 * @return The new logger instance
+	 * @throws SecurityException If a security manager is present and does not allow creating a new logger instance
 	 */
 	public static Logger createLogger() {
 		return createLogger(0);
@@ -111,14 +115,53 @@ public final class LoggerUtil {
 
 	protected static Logger createLogger(int off) {
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[3 + off];
+		String fullName = ste.getClassName();
 		String[] str = ste.getClassName().split("\\.");
-		String fullName = str[str.length - 1];
+		String label = str[str.length - 1];
 		new LUPermission("logger", "create", fullName).check();
-		return new Logger(fullName);
+		return new Logger(fullName, label);
 	}
 
 	protected static Logger createLogger(Class<?> cl) {
-		return new Logger(cl.getSimpleName());
+		return new Logger(cl.getName(), cl.getSimpleName());
+	}
+
+
+	/**
+	 * Mutes the {@link Logger} with the given name, causing the affected logger to no longer print log messages. If a fine log listener is configured using
+	 * {@link #addFineLogListener(BiConsumer)}, the logger will continue to generate log messages.
+	 * 
+	 * @param fullClassName The name of the logger, as returned by {@link Logger#getFullClassName()} or {@link Class#getName()}
+	 * @return <code>true</code> if the logger was not already muted
+	 * @throws SecurityException If a security manager is present and does not allow muting the logger with the given name
+	 * @since 2.5
+	 */
+	public static boolean muteLogger(String fullClassName) {
+		new LUPermission("logger", "mute", fullClassName).check();
+		return mutedLoggers.add(fullClassName);
+	}
+
+	/**
+	 * Unmutes the {@link Logger} with the given name, reversing any mute operation by a previous call to {@link #muteLogger(String)}.
+	 * 
+	 * @param fullClassName The name of the logger, as returned by {@link Logger#getFullClassName()} or {@link Class#getName()}
+	 * @return <code>true</code> if the logger was not muted
+	 * @throws SecurityException If a security manager is present and does not allow unmuting the logger with the given name
+	 * @since 2.5
+	 */
+	public static boolean unmuteLogger(String fullClassName) {
+		new LUPermission("logger", "unmute", fullClassName).check();
+		return mutedLoggers.remove(fullClassName);
+	}
+
+	/**
+	 * 
+	 * @param fullClassName The name of the logger, as returned by {@link Logger#getFullClassName()} or {@link Class#getName()}
+	 * @return <code>true</code> if the logger with the given name is muted due to a previous call to {@link #muteLogger(String)}
+	 * @since 2.5
+	 */
+	public static boolean isLoggerMuted(String fullClassName) {
+		return mutedLoggers.contains(fullClassName);
 	}
 
 
@@ -300,6 +343,8 @@ public final class LoggerUtil {
 	 * <tr><td>logListener</td><td>addRegular</td><td></td><td>{@link LoggerUtil#addLogListener(BiConsumer)}</td></tr>
 	 * <tr><td>logListener</td><td>addFine</td><td></td><td>{@link LoggerUtil#addFineLogListener(BiConsumer)}</td></tr>
 	 * <tr><td>logger</td><td>create</td><td>Full class name of the logger</td><td>{@link LoggerUtil#createLogger()}</td></tr>
+	 * <tr><td>logger</td><td>mute</td><td>Full class name of the logger</td><td>{@link LoggerUtil#muteLogger(String)}</td></tr>
+	 * <tr><td>logger</td><td>unmute</td><td>Full class name of the logger</td><td>{@link LoggerUtil#unmuteLogger(String)}</td></tr>
 	 * </table>
 	 * <br>
 	 * All permissions are an instance of this class. <b>name</b> is the string returned by {@link #getName()}, <b>action</b> is a string returned by {@link #getActions()},

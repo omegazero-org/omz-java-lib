@@ -18,9 +18,19 @@ import org.omegazero.common.util.Util;
 
 public final class Logger {
 
-	private String label;
+	private final String fullClassName;
+	private final String label;
 
-	protected Logger(String label) {
+	protected Logger(String fullClassName) {
+		this(fullClassName, fullClassName);
+	}
+
+	protected Logger(Class<?> creator) {
+		this(creator.getName(), creator.getSimpleName());
+	}
+
+	public Logger(String fullClassName, String label) {
+		this.fullClassName = fullClassName;
 		this.label = label;
 	}
 
@@ -51,8 +61,8 @@ public final class Logger {
 
 
 	public void log(LogLevel level, Object[] obj) {
-		boolean logLevelDisabled = LoggerUtil.getLogLevel().level() < level.level();
-		if(!LoggerUtil.needAllLogMessages() && logLevelDisabled)
+		boolean logEnabled = this.isLogging(level);
+		if(!LoggerUtil.needAllLogMessages() && !logEnabled)
 			return;
 		StringBuilder sb = new StringBuilder(32);
 		sb.append(Util.getFormattedTime()).append(' ');
@@ -72,7 +82,7 @@ public final class Logger {
 		}
 		String s = sb.toString();
 		LoggerUtil.logToListeners(level, s);
-		if(logLevelDisabled)
+		if(!logEnabled)
 			return;
 		LoggerUtil.logToStdout(level.color() + s + "\u001b[0m");
 		LoggerUtil.addLogToBuffer(s);
@@ -87,6 +97,38 @@ public final class Logger {
 	 */
 	public boolean debug() {
 		return LoggerUtil.getLogLevel().level() >= LogLevel.DEBUG.level();
+	}
+
+	/**
+	 * Checks if this <code>Logger</code> prints log messages, taking into account the configured log level and whether this logger is muted.
+	 * 
+	 * @param level The log level to check
+	 * @return <code>true</code> if this logger prints log messages on the given log level
+	 * @since 2.5
+	 * @see LoggerUtil#getLogLevel()
+	 * @see LoggerUtil#isLoggerMuted(String)
+	 */
+	public boolean isLogging(LogLevel level) {
+		return !LoggerUtil.isLoggerMuted(this.fullClassName) && LoggerUtil.getLogLevel().level() >= level.level();
+	}
+
+
+	/**
+	 * 
+	 * @return The full name of the class this <code>Logger</code> is bound to
+	 * @since 2.5
+	 */
+	public String getFullClassName() {
+		return this.fullClassName;
+	}
+
+	/**
+	 * 
+	 * @return The short name of the class this <code>Logger</code> is bound to, which is also used as the label in log messages
+	 * @since 2.5
+	 */
+	public String getLabel() {
+		return this.label;
 	}
 
 

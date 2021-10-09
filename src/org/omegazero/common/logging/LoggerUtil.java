@@ -16,23 +16,28 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Writer;
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import org.omegazero.common.event.Tasks;
 import org.omegazero.common.util.PropertyUtil;
 
+/**
+ * Maintains and manages the logging state of <i>omz-java-lib</i> and {@link Logger} instances.
+ * 
+ * @see #init(LogLevel, String)
+ * @see LUPermission
+ * @since 2.1
+ */
 public final class LoggerUtil {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
 	public static final int SAVE_INTERVAL = PropertyUtil.getInt("org.omegazero.common.logging.saveInterval", 300) * 1000;
 	public static final int LOG_BUFFER_MAX = PropertyUtil.getInt("org.omegazero.common.logging.logBufferSize", 1024);
-
-	private static final RuntimePermission SET_LOGGER_UTIL_SETTINGS_PERMISSION = new RuntimePermission("setLoggerUtilSettings");
-	private static final RuntimePermission SET_LOGGER_OUT_PERMISSION = new RuntimePermission("setLoggerOut");
-	private static final RuntimePermission LOG_LISTENER_PERMISSION = new RuntimePermission("logListener");
 
 	private static String logFile = null;
 	private static LogLevel logLevel = LogLevel.INFO;
@@ -65,7 +70,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static void init(LogLevel level, String file) {
-		checkLoggerSettingsPermission();
+		new LUPermission("settings", "init", null).check();
 
 		if(level != null)
 			LoggerUtil.logLevel = level;
@@ -86,7 +91,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static void close() {
-		checkLoggerSettingsPermission();
+		new LUPermission("settings", "close", null).check();
 		if(LoggerUtil.logFile != null){
 			logger.info("Saving log to '" + logFile + "'");
 			LoggerUtil.flushLogBuffer();
@@ -107,27 +112,15 @@ public final class LoggerUtil {
 	protected static Logger createLogger(int off) {
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[3 + off];
 		String[] str = ste.getClassName().split("\\.");
-		return new Logger(str[str.length - 1]);
+		String fullName = str[str.length - 1];
+		new LUPermission("logger", "create", fullName).check();
+		return new Logger(fullName);
 	}
 
 	protected static Logger createLogger(Class<?> cl) {
 		return new Logger(cl.getSimpleName());
 	}
 
-
-	protected static void checkLoggerSettingsPermission() {
-		checkPermission(SET_LOGGER_UTIL_SETTINGS_PERMISSION);
-	}
-
-	protected static void checkLoggerIOPermission() {
-		checkPermission(SET_LOGGER_OUT_PERMISSION);
-	}
-
-	protected static void checkPermission(java.security.Permission perm) {
-		SecurityManager sm = System.getSecurityManager();
-		if(sm != null)
-			sm.checkPermission(perm);
-	}
 
 	/**
 	 * Redirects the <code>System.out</code> and <code>System.err</code> to Logger streams, causing messages printed using <code>System.out.[...]</code> or
@@ -136,7 +129,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow reassignment of the standard or logger output streams
 	 */
 	public static void redirectStandardOutputStreams() {
-		checkLoggerIOPermission();
+		new LUPermission("io", "redirectStd", null).check();
 		System.setOut(new PrintStream(new LoggerOutputStream("stdout")));
 		System.setErr(new PrintStream(new LoggerOutputStream("stderr")));
 	}
@@ -149,7 +142,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow reassignment of the logger output stream
 	 */
 	public static void setUseStderr(boolean u) {
-		checkLoggerIOPermission();
+		new LUPermission("io", "useStderr", u).check();
 		if(u)
 			LoggerUtil.loggerOut = LoggerUtil.sysErr;
 		else
@@ -171,7 +164,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow adding log listeners
 	 */
 	public static void addLogListener(BiConsumer<LogLevel, String> listener) {
-		checkPermission(LOG_LISTENER_PERMISSION);
+		new LUPermission("logListener", "addRegular", null).check();
 		LoggerUtil.listeners.add(listener);
 	}
 
@@ -184,7 +177,7 @@ public final class LoggerUtil {
 	 * @since 2.3
 	 */
 	public static void addFineLogListener(BiConsumer<LogLevel, String> listener) {
-		checkPermission(LOG_LISTENER_PERMISSION);
+		new LUPermission("logListener", "addFine", null).check();
 		LoggerUtil.listenersFine.add(listener);
 	}
 
@@ -254,7 +247,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static void setSyncFlush(boolean syncFlush) {
-		checkLoggerSettingsPermission();
+		new LUPermission("settings", "setSyncFlush", syncFlush).check();
 		LoggerUtil.syncFlush = syncFlush;
 	}
 
@@ -266,7 +259,7 @@ public final class LoggerUtil {
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static LogLevel setLogLevel(LogLevel logLevel) {
-		checkLoggerSettingsPermission();
+		new LUPermission("settings", "setLogLevel", logLevel).check();
 		LogLevel prev = LoggerUtil.logLevel;
 		LoggerUtil.logLevel = logLevel;
 		return prev;
@@ -278,5 +271,89 @@ public final class LoggerUtil {
 	 */
 	public static LogLevel getLogLevel() {
 		return LoggerUtil.logLevel;
+	}
+
+	/**
+	 * 
+	 * @return The configured log file
+	 * @since 2.5
+	 */
+	public static String getLogFile() {
+		return LoggerUtil.logFile;
+	}
+
+
+	// @formatter:off
+	/**
+	 * Represents a permission checked by the security manager when an operation is performed that changes the logging state.<br>
+	 * <br>
+	 * The following permissions are checked:
+	 * 
+	 * <table>
+	 * <tr><th>name</th><th>action</th><th>attachment</th><th>Checked by</th></tr>
+	 * <tr><td>settings</td><td>init</td><td></td><td>{@link LoggerUtil#init(LogLevel, String)}</td></tr>
+	 * <tr><td>settings</td><td>close</td><td></td><td>{@link LoggerUtil#close()}</td></tr>
+	 * <tr><td>settings</td><td>setSyncFlush</td><td>The new boolean value</td><td>{@link LoggerUtil#setSyncFlush(boolean)}</td></tr>
+	 * <tr><td>settings</td><td>setLogLevel</td><td>The new {@link LogLevel}</td><td>{@link LoggerUtil#setLogLevel(LogLevel)}</td></tr>
+	 * <tr><td>io</td><td>redirectStd</td><td></td><td>{@link LoggerUtil#redirectStandardOutputStreams()}</td></tr>
+	 * <tr><td>io</td><td>useStderr</td><td>The new boolean value</td><td>{@link LoggerUtil#setUseStderr(boolean)}</td></tr>
+	 * <tr><td>logListener</td><td>addRegular</td><td></td><td>{@link LoggerUtil#addLogListener(BiConsumer)}</td></tr>
+	 * <tr><td>logListener</td><td>addFine</td><td></td><td>{@link LoggerUtil#addFineLogListener(BiConsumer)}</td></tr>
+	 * <tr><td>logger</td><td>create</td><td>Full class name of the logger</td><td>{@link LoggerUtil#createLogger()}</td></tr>
+	 * </table>
+	 * <br>
+	 * All permissions are an instance of this class. <b>name</b> is the string returned by {@link #getName()}, <b>action</b> is a string returned by {@link #getActions()},
+	 * <b>attachment</b> any object involved in the checked operation returned by {@link #getAttachment()}.
+	 * 
+	 * @since 2.5
+	 */
+	// @formatter:on
+	public static class LUPermission extends Permission implements java.io.Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		private String actions;
+		private Object attachment;
+
+		protected LUPermission(String name, String actions, Object attachment) {
+			super(Objects.requireNonNull(name));
+			this.actions = Objects.requireNonNull(actions);
+			this.attachment = attachment;
+		}
+
+
+		@Override
+		public boolean implies(Permission permission) {
+			return false;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if(obj == null || !(obj instanceof LUPermission))
+				return false;
+			LUPermission p = (LUPermission) obj;
+			return super.getName().equals(p.getName()) && this.actions.equals(p.actions) && Objects.equals(this.attachment, p.attachment);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.getName().hashCode() + this.actions.hashCode() + (this.attachment != null ? this.attachment.hashCode() : 0);
+		}
+
+		@Override
+		public String getActions() {
+			return this.actions;
+		}
+
+		public Object getAttachment() {
+			return this.attachment;
+		}
+
+
+		public void check() {
+			SecurityManager sm = System.getSecurityManager();
+			if(sm != null)
+				sm.checkPermission(this);
+		}
 	}
 }

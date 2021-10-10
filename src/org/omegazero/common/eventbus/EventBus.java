@@ -108,7 +108,7 @@ public class EventBus {
 	 * <br>
 	 * The next time an event is dispatched, the list of listeners must be rebuilt from the list of subscribers.
 	 */
-	public void flushEventCache() {
+	public synchronized void flushEventCache() {
 		eventCache.clear();
 	}
 
@@ -165,11 +165,11 @@ public class EventBus {
 		return res;
 	}
 
-	private synchronized int dispatchEvent0(Event event, EventResult res, Object[] args) {
-		List<Subscriber> subs = eventCache.get(event.getEventSignature());
+	private synchronized List<Subscriber> getSortedEventSubscriberList(Event event, Object[] args) {
+		List<Subscriber> subs = this.eventCache.get(event.getEventSignature());
 		if(subs == null){
 			subs = new ArrayList<Subscriber>();
-			for(Subscriber sub : subscribers){
+			for(Subscriber sub : this.subscribers){
 				boolean av = sub.isListenerMethodForEventAvailable(event, args);
 				if(av)
 					subs.add(sub);
@@ -185,8 +185,13 @@ public class EventBus {
 							- s1.getListenerMethodForEvent(event, args).getAnnotation(SubscribeEvent.class).priority().value();
 				}
 			});
-			eventCache.put(event.getEventSignature(), subs);
+			this.eventCache.put(event.getEventSignature(), subs);
 		}
+		return subs;
+	}
+
+	private int dispatchEvent0(Event event, EventResult res, Object[] args) {
+		List<Subscriber> subs = this.getSortedEventSubscriberList(event, args);
 		int listeners = 0;
 		for(Subscriber sub : subs){
 			try{

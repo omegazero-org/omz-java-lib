@@ -54,6 +54,20 @@ public class TaskScheduler {
 	 * 
 	 * @param handler The handler to be run at the specified <b>timeout</b>
 	 * @param timeout The offset in milliseconds when the handler should be called
+	 * @return The unique id of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(long)}
+	 * @since 2.6
+	 */
+	public TimerTask timeout(Runnable handler, long timeout) {
+		return this.timeout((a) -> {
+			handler.run();
+		}, timeout);
+	}
+
+	/**
+	 * Schedules a task to be run at the specified <b>timeout</b> relative to the time this function was called.
+	 * 
+	 * @param handler The handler to be run at the specified <b>timeout</b>
+	 * @param timeout The offset in milliseconds when the handler should be called
 	 * @param args    Arguments to be passed to the handler
 	 * @return The unique id of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(long)}.
 	 */

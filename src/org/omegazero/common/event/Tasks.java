@@ -34,6 +34,14 @@ public final class Tasks {
 	}
 
 	/**
+	 * @see TaskScheduler#timeout(Runnable, long)
+	 */
+	public static TimerTask timeout(Runnable handler, long timeout) {
+		init();
+		return globalInstance.timeout(handler, timeout);
+	}
+
+	/**
 	 * @see TaskScheduler#timeout(Consumer, long, Object...)
 	 */
 	public static TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {

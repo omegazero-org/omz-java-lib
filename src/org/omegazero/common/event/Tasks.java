@@ -34,7 +34,12 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#timeout(Runnable, long)
+	 * See {@link TaskScheduler#timeout(Runnable, long)}.
+	 * 
+	 * @param handler The handler
+	 * @param timeout The timeout in milliseconds
+	 * @return The {@link TimerTask} instance
+	 * @since 2.6
 	 */
 	public static TimerTask timeout(Runnable handler, long timeout) {
 		init();
@@ -42,7 +47,12 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#timeout(Consumer, long, Object...)
+	 * See {@link TaskScheduler#timeout(Consumer, long, Object...)}.
+	 * 
+	 * @param handler The handler
+	 * @param timeout The timeout in milliseconds
+	 * @param args    Handler arguments
+	 * @return The {@link TimerTask} instance
 	 */
 	public static TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
 		init();
@@ -50,7 +60,12 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#interval(Consumer, long, Object...)
+	 * See {@link TaskScheduler#interval(Consumer, long, Object...)}.
+	 * 
+	 * @param handler The handler
+	 * @param timeout The interval in milliseconds
+	 * @param args    Handler arguments
+	 * @return The {@link TimerTask} instance
 	 */
 	public static TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
 		init();
@@ -58,7 +73,10 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#clear(TimerTask)
+	 * See {@link TaskScheduler#clear(TimerTask)}.
+	 * 
+	 * @param tt The {@link TimerTask} to cancel
+	 * @return Whether the task existed
 	 */
 	public static boolean clear(TimerTask tt) {
 		init();
@@ -66,7 +84,10 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#clear(long)
+	 * See {@link TaskScheduler#clear(long)}.
+	 * 
+	 * @param id The id of the {@link TimerTask} to cancel
+	 * @return Whether the task existed
 	 */
 	public static boolean clear(long id) {
 		init();
@@ -74,7 +95,7 @@ public final class Tasks {
 	}
 
 	/**
-	 * @see TaskScheduler#exit()
+	 * See {@link TaskScheduler#exit()}.
 	 */
 	public static void exit() {
 		if(globalInstance != null){

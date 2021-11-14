@@ -54,8 +54,10 @@ public class TaskScheduler {
 	 * 
 	 * @param handler The handler to be run at the specified <b>timeout</b>
 	 * @param timeout The offset in milliseconds when the handler should be called
-	 * @return The unique id of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(long)}
+	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
 	 * @since 2.6
+	 * @see #timeout(Consumer, long, Object...)
+	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Runnable handler, long timeout) {
 		return this.timeout((a) -> {
@@ -69,10 +71,12 @@ public class TaskScheduler {
 	 * @param handler The handler to be run at the specified <b>timeout</b>
 	 * @param timeout The offset in milliseconds when the handler should be called
 	 * @param args    Arguments to be passed to the handler
-	 * @return The unique id of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(long)}.
+	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
+	 * @see #timeout(Runnable, long)
+	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
-		TimerTask tt = new TimerTask(++idCounter, handler, System.currentTimeMillis() + timeout, 0, args);
+		TimerTask tt = new TimerTask(++this.idCounter, handler, System.currentTimeMillis() + timeout, 0, args);
 		queue(tt);
 		return tt;
 	}
@@ -83,10 +87,12 @@ public class TaskScheduler {
 	 * @param handler  The handler to be run at the specified <b>interval</b>
 	 * @param interval The time in milliseconds between calls
 	 * @param args     Arguments to be passed to the handler
-	 * @return The unique id of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(long)}.
+	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
+	 * @see #timeout(Runnable, long)
+	 * @see #timeout(Consumer, long, Object...)
 	 */
 	public TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
-		TimerTask tt = new TimerTask(++idCounter, handler, System.currentTimeMillis() + interval, interval, args);
+		TimerTask tt = new TimerTask(++this.idCounter, handler, System.currentTimeMillis() + interval, interval, args);
 		queue(tt);
 		return tt;
 	}
@@ -98,16 +104,16 @@ public class TaskScheduler {
 	 * @param task The task to queue
 	 */
 	private void queue(TimerTask task) {
-		synchronized(queue){
-			int index = queue.size();
-			for(int i = 0; i < queue.size(); i++){
-				if(queue.get(i).time > task.time){
+		synchronized(this.queue){
+			int index = this.queue.size();
+			for(int i = 0; i < this.queue.size(); i++){
+				if(this.queue.get(i).time > task.time){
 					index = i;
 					break;
 				}
 			}
-			queue.add(index, task);
-			queue.notify();
+			this.queue.add(index, task);
+			this.queue.notify();
 		}
 	}
 
@@ -115,7 +121,7 @@ public class TaskScheduler {
 	/**
 	 * Cancels the given timer task.
 	 * 
-	 * @param tt The task to cancel
+	 * @param tt The {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
 	 */
 	public boolean clear(TimerTask tt) {
@@ -125,16 +131,16 @@ public class TaskScheduler {
 	/**
 	 * Cancels the given timer task.
 	 * 
-	 * @param id The id of the task to cancel
+	 * @param id The id of the {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
 	 */
 	public boolean clear(long id) {
-		synchronized(queue){
-			for(int i = 0; i < queue.size(); i++){
-				TimerTask t = queue.get(i);
+		synchronized(this.queue){
+			for(int i = 0; i < this.queue.size(); i++){
+				TimerTask t = this.queue.get(i);
 				if(t.id == id){
 					t.canceled = true;
-					queue.notifyAll();
+					this.queue.notifyAll();
 					return true;
 				}
 			}
@@ -146,11 +152,11 @@ public class TaskScheduler {
 	private void execute(boolean persistent) {
 		while(!persistent || this.running){
 			try{
-				synchronized(queue){
+				synchronized(this.queue){
 					if(!persistent && isAllDaemon())
 						break;
-					while(queue.size() < 1){
-						queue.wait();
+					while(this.queue.size() < 1){
+						this.queue.wait();
 					}
 					executeNext();
 				}
@@ -164,25 +170,25 @@ public class TaskScheduler {
 	}
 
 	private void executeNext() throws InterruptedException {
-		synchronized(queue){
-			if(queue.size() < 1)
+		synchronized(this.queue){
+			if(this.queue.size() < 1)
 				return;
 			long time = System.currentTimeMillis();
-			TimerTask t = queue.get(0);
+			TimerTask t = this.queue.get(0);
 
 			if(t.canceled)
-				queue.remove(0);
+				this.queue.remove(0);
 			else if(t.time > time)
-				queue.wait(t.time - time);
+				this.queue.wait(t.time - time);
 
-			if(queue.size() < 1)
+			if(this.queue.size() < 1)
 				return;
 			time = System.currentTimeMillis();
-			t = queue.get(0);
+			t = this.queue.get(0);
 			if(t.canceled){
-				queue.remove(0);
+				this.queue.remove(0);
 			}else if(t.time <= time){
-				queue.remove(0);
+				this.queue.remove(0);
 				if(t.period > 0){
 					t.time = time + t.period;
 					queue(t);
@@ -199,8 +205,8 @@ public class TaskScheduler {
 	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks.
 	 */
 	public boolean isAllDaemon() {
-		for(int i = 0; i < queue.size(); i++){
-			TimerTask t = queue.get(i);
+		for(int i = 0; i < this.queue.size(); i++){
+			TimerTask t = this.queue.get(i);
 			if(!t.daemon && !t.canceled){
 				return false;
 			}
@@ -221,10 +227,11 @@ public class TaskScheduler {
 	}
 
 	/**
-	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future) and exiting the worker threads.<br>
+	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future and non-daemon) and exiting the worker
+	 * threads.<br>
 	 * <br>
-	 * If <b>blocking</b> is <code>true</code>, the caller thread is blocked until all remaining tasks are run and all worker threads have exited; otherwise, the shutdown
-	 * procedure is run by a separate thread.
+	 * If <b>blocking</b> is <code>true</code>, the caller thread is blocked until all remaining non-daemon tasks are run and all worker threads have exited; otherwise, the
+	 * shutdown procedure is run by a separate thread.
 	 * 
 	 * @param blocking Whether the call to this method should block until the shutdown procedure is complete
 	 */
@@ -243,14 +250,17 @@ public class TaskScheduler {
 	}
 
 	private void exit0() {
-		synchronized(queue){
-			queue.notify();
+		synchronized(this.queue){
+			this.queue.notify();
 		}
 		this.execute(false);
 		this.executor.exit(true);
 	}
 
 
+	/**
+	 * Represents a task managed by a {@link TaskScheduler}.
+	 */
 	public static class TimerTask {
 
 		private final long id;
@@ -270,11 +280,25 @@ public class TaskScheduler {
 			this.args = args;
 		}
 
+		/**
+		 * Marks this task as a daemon task. If a task is a daemon task, it will not prevent the {@link TaskScheduler} from exiting.
+		 * 
+		 * @return This instance
+		 * @see TaskScheduler#exit(boolean)
+		 * @see #undaemon()
+		 */
 		public TimerTask daemon() {
 			this.daemon = true;
 			return this;
 		}
 
+		/**
+		 * Marks this task as a non-daemon task. Queued non-daemon tasks prevent the {@link TaskScheduler} from exiting.
+		 * 
+		 * @return This instance
+		 * @see TaskScheduler#exit(boolean)
+		 * @see #daemon()
+		 */
 		public TimerTask undaemon() {
 			this.daemon = false;
 			return this;
@@ -286,27 +310,48 @@ public class TaskScheduler {
 
 
 		public long getId() {
-			return id;
+			return this.id;
 		}
 
+		/**
+		 * 
+		 * @return The absolute time in milliseconds when this task is scheduled to run
+		 */
 		public long getTime() {
-			return time;
+			return this.time;
 		}
 
+		/**
+		 * 
+		 * @return The interval in milliseconds between running this task
+		 */
 		public long getPeriod() {
-			return period;
+			return this.period;
 		}
 
+		/**
+		 * 
+		 * @return The arguments defined for this task
+		 */
 		public Object[] getArgs() {
-			return args;
+			return this.args;
 		}
 
+		/**
+		 * 
+		 * @return Whether this task was defined as a daemon task
+		 * @see #daemon()
+		 */
 		public boolean isDaemon() {
-			return daemon;
+			return this.daemon;
 		}
 
+		/**
+		 * 
+		 * @return Whether this task is canceled
+		 */
 		public boolean isCanceled() {
-			return canceled;
+			return this.canceled;
 		}
 	}
 }

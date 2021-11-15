@@ -151,6 +151,8 @@ public class TaskScheduler {
 	 * @param tt The {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
 	 * @since 2.1
+	 * @see #clear(long)
+	 * @see TimerTask#cancel()
 	 */
 	public boolean clear(TimerTask tt) {
 		return clear(tt.id);
@@ -162,6 +164,8 @@ public class TaskScheduler {
 	 * @param id The id of the {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
 	 * @since 2.1
+	 * @see #clear(TimerTask)
+	 * @see TimerTask#cancel()
 	 */
 	public boolean clear(long id) {
 		synchronized(this.queue){
@@ -294,7 +298,7 @@ public class TaskScheduler {
 	/**
 	 * Represents a task managed by a {@link TaskScheduler}.
 	 */
-	public static class TimerTask {
+	public class TimerTask {
 
 		private final long id;
 		private final Consumer<Object[]> handler;
@@ -312,6 +316,27 @@ public class TaskScheduler {
 			this.period = period;
 			this.args = args;
 		}
+
+
+		/**
+		 * Cancels this task.
+		 * 
+		 * Equivalent to a call to:
+		 * 
+		 * <pre>
+		 * taskScheduler.{@link TaskScheduler#clear(TimerTask) clear}(this)
+		 * </pre>
+		 * 
+		 * where <code>taskScheduler</code> is the {@link TaskScheduler} that created this {@link TimerTask}.
+		 * 
+		 * @return <code>true</code> if the task was found and successfully canceled
+		 * @since 2.6
+		 * @see TaskScheduler#clear(TimerTask)
+		 */
+		public boolean cancel() {
+			return TaskScheduler.this.clear(this);
+		}
+
 
 		/**
 		 * Marks this task as a daemon task. If a task is a daemon task, it will not prevent the {@link TaskScheduler} from exiting.

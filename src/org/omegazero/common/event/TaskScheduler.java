@@ -21,6 +21,8 @@ import java.util.function.Consumer;
  * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses an {@link EventQueueExecutor}.<br>
  * <br>
  * Timing may be inaccurate, depending on the platform. The implementation uses {@link Object#wait(long)}.
+ * 
+ * @since 2.1
  */
 public class TaskScheduler {
 
@@ -34,6 +36,8 @@ public class TaskScheduler {
 
 	/**
 	 * Creates a TaskScheduler and starts the background execution thread.
+	 * 
+	 * @since 2.1
 	 */
 	public TaskScheduler() {
 		Thread executionThread = new Thread(){
@@ -57,6 +61,7 @@ public class TaskScheduler {
 	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
 	 * @since 2.6
 	 * @see #timeout(Consumer, long, Object...)
+	 * @see #interval(Runnable, long)
 	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Runnable handler, long timeout) {
@@ -72,7 +77,9 @@ public class TaskScheduler {
 	 * @param timeout The offset in milliseconds when the handler should be called
 	 * @param args    Arguments to be passed to the handler
 	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
+	 * @since 2.1
 	 * @see #timeout(Runnable, long)
+	 * @see #interval(Runnable, long)
 	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
@@ -86,8 +93,27 @@ public class TaskScheduler {
 	 * 
 	 * @param handler  The handler to be run at the specified <b>interval</b>
 	 * @param interval The time in milliseconds between calls
+	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
+	 * @since 2.6
+	 * @see #interval(Consumer, long, Object...)
+	 * @see #timeout(Runnable, long)
+	 * @see #timeout(Consumer, long, Object...)
+	 */
+	public TimerTask interval(Runnable handler, long interval) {
+		return this.interval((a) -> {
+			handler.run();
+		}, interval);
+	}
+
+	/**
+	 * Schedules a task to be run every <b>interval</b> milliseconds. The task is first run in <b>interval</b> milliseconds relative to the time this function was called.
+	 * 
+	 * @param handler  The handler to be run at the specified <b>interval</b>
+	 * @param interval The time in milliseconds between calls
 	 * @param args     Arguments to be passed to the handler
 	 * @return The {@link TimerTask} instance of this task. May be used as an argument to a subsequent call to {@link TaskScheduler#clear(TimerTask)}
+	 * @since 2.1
+	 * @see #interval(Runnable, long)
 	 * @see #timeout(Runnable, long)
 	 * @see #timeout(Consumer, long, Object...)
 	 */
@@ -102,6 +128,7 @@ public class TaskScheduler {
 	 * Queues the given task.
 	 * 
 	 * @param task The task to queue
+	 * @since 2.1
 	 */
 	private void queue(TimerTask task) {
 		synchronized(this.queue){
@@ -123,6 +150,7 @@ public class TaskScheduler {
 	 * 
 	 * @param tt The {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
+	 * @since 2.1
 	 */
 	public boolean clear(TimerTask tt) {
 		return clear(tt.id);
@@ -133,6 +161,7 @@ public class TaskScheduler {
 	 * 
 	 * @param id The id of the {@link TimerTask} to cancel
 	 * @return <b>true</b> if the task was found and successfully canceled
+	 * @since 2.1
 	 */
 	public boolean clear(long id) {
 		synchronized(this.queue){
@@ -202,7 +231,8 @@ public class TaskScheduler {
 
 	/**
 	 * 
-	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks.
+	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks
+	 * @since 2.1
 	 */
 	public boolean isAllDaemon() {
 		for(int i = 0; i < this.queue.size(); i++){
@@ -221,6 +251,8 @@ public class TaskScheduler {
 	 * <pre>
 	 * {@link #exit(boolean) exit(false)}
 	 * </pre>
+	 * 
+	 * @since 2.1
 	 */
 	public void exit() {
 		this.exit(false);
@@ -234,6 +266,7 @@ public class TaskScheduler {
 	 * shutdown procedure is run by a separate thread.
 	 * 
 	 * @param blocking Whether the call to this method should block until the shutdown procedure is complete
+	 * @since 2.1
 	 */
 	public void exit(boolean blocking) {
 		synchronized(this){
@@ -309,6 +342,10 @@ public class TaskScheduler {
 		}
 
 
+		/**
+		 * 
+		 * @return The {@link TaskScheduler}-instance-wide unique ID of this {@link TimerTask}
+		 */
 		public long getId() {
 			return this.id;
 		}

@@ -19,6 +19,8 @@ import org.omegazero.common.event.TaskScheduler.TimerTask;
  * Convenience class for globally scheduled tasks using a {@link TaskScheduler}.<br>
  * <br>
  * See methods in {@link TaskScheduler} for detailed information.
+ * 
+ * @since 2.1
  */
 public final class Tasks {
 
@@ -53,10 +55,24 @@ public final class Tasks {
 	 * @param timeout The timeout in milliseconds
 	 * @param args    Handler arguments
 	 * @return The {@link TimerTask} instance
+	 * @since 2.1
 	 */
 	public static TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
 		init();
 		return globalInstance.timeout(handler, timeout, args);
+	}
+
+	/**
+	 * See {@link TaskScheduler#interval(Runnable, long)}.
+	 * 
+	 * @param handler The handler
+	 * @param timeout The interval in milliseconds
+	 * @return The {@link TimerTask} instance
+	 * @since 2.6
+	 */
+	public static TimerTask interval(Runnable handler, long timeout) {
+		init();
+		return globalInstance.interval(handler, timeout);
 	}
 
 	/**
@@ -66,6 +82,7 @@ public final class Tasks {
 	 * @param timeout The interval in milliseconds
 	 * @param args    Handler arguments
 	 * @return The {@link TimerTask} instance
+	 * @since 2.1
 	 */
 	public static TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
 		init();
@@ -77,6 +94,7 @@ public final class Tasks {
 	 * 
 	 * @param tt The {@link TimerTask} to cancel
 	 * @return Whether the task existed
+	 * @since 2.1
 	 */
 	public static boolean clear(TimerTask tt) {
 		init();
@@ -88,6 +106,7 @@ public final class Tasks {
 	 * 
 	 * @param id The id of the {@link TimerTask} to cancel
 	 * @return Whether the task existed
+	 * @since 2.1
 	 */
 	public static boolean clear(long id) {
 		init();

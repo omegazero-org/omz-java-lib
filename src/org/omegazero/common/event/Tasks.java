@@ -122,4 +122,15 @@ public final class Tasks {
 			globalInstance = null;
 		}
 	}
+
+	/**
+	 * See {@link TaskScheduler#setErrorHandler(Consumer)}.
+	 * 
+	 * @param errorHandler The error handler
+	 * @since 2.6
+	 */
+	public static void setErrorHandler(Consumer<Throwable> errorHandler) {
+		init();
+		globalInstance.setErrorHandler(errorHandler);
+	}
 }

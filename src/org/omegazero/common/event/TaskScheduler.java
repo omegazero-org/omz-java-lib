@@ -32,6 +32,8 @@ public class TaskScheduler {
 
 	private EventQueueExecutor executor = new EventQueueExecutor(false, "TaskScheduler");
 
+	private Consumer<Throwable> errorHandler;
+
 	private boolean running = true;
 
 	/**
@@ -194,10 +196,10 @@ public class TaskScheduler {
 					executeNext();
 				}
 			}catch(InterruptedException e){
-				e.printStackTrace();
+				this.handleError(e);
 				break;
 			}catch(Exception e){
-				e.printStackTrace();
+				this.handleError(e);
 			}
 		}
 	}
@@ -232,6 +234,14 @@ public class TaskScheduler {
 			}
 		}
 	}
+
+	private void handleError(Throwable e) {
+		if(this.errorHandler != null)
+			this.errorHandler.accept(e);
+		else
+			e.printStackTrace();
+	}
+
 
 	/**
 	 * 
@@ -292,6 +302,23 @@ public class TaskScheduler {
 		}
 		this.execute(false);
 		this.executor.exit(true);
+	}
+
+
+	/**
+	 * Sets the error handler that will be called when an error occurs while queuing a task. Also {@linkplain sets the error handler} of this <code>TaskScheduler</code>'s
+	 * {@link EventQueueExecutor}.<br>
+	 * <br>
+	 * If an error occurs while queuing a task, the error is {@linkplain Exception#printStackTrace() printed to <code>stderr</code>}. For default behavior when an error occurs
+	 * while running a task, see {@link EventQueueExecutor#setErrorHandler(Consumer)}.
+	 * 
+	 * @param errorHandler The error handler
+	 * @since 2.6
+	 * @see EventQueueExecutor#setErrorHandler(Consumer)
+	 */
+	public void setErrorHandler(Consumer<Throwable> errorHandler) {
+		this.errorHandler = errorHandler;
+		this.executor.setErrorHandler(errorHandler);
 	}
 
 

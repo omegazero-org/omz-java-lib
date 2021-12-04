@@ -11,11 +11,20 @@
  */
 package org.omegazero.common.event;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import org.omegazero.common.event.task.LambdaTask;
+import org.omegazero.common.event.task.ReflectTask;
+import org.omegazero.common.event.task.Task;
+
+/**
+ * Used for queuing {@link Task}s.
+ * 
+ * @deprecated Since 2.6. Use {@link java.util.concurrent.BlockingQueue} and its implementing classes instead.
+ */
+@Deprecated
 public class EventQueue {
 
 	private final int maxTasks;
@@ -45,7 +54,7 @@ public class EventQueue {
 	public EventQueue(int maxTasks, boolean preallocate) {
 		this.maxTasks = maxTasks;
 		if(preallocate)
-			tasks.ensureCapacity(maxTasks);
+			this.tasks.ensureCapacity(maxTasks);
 	}
 
 
@@ -57,16 +66,16 @@ public class EventQueue {
 	 * @param task The task to queue
 	 */
 	public synchronized void queue(Task task) {
-		if(tasks.size() + 1 > this.maxTasks)
-			throw new RuntimeException("Event Queue task limit exceeded: " + tasks.size());
-		int index = tasks.size();
-		for(int i = 0; i < tasks.size(); i++){
-			if(tasks.get(i).getPriority() > task.getPriority()){
+		if(this.tasks.size() + 1 > this.maxTasks)
+			throw new RuntimeException("Event Queue task limit exceeded: " + this.tasks.size());
+		int index = this.tasks.size();
+		for(int i = 0; i < this.tasks.size(); i++){
+			if(this.tasks.get(i).getPriority() > task.getPriority()){
 				index = i;
 				break;
 			}
 		}
-		tasks.add(index, task);
+		this.tasks.add(index, task);
 		this.notify();
 	}
 
@@ -94,7 +103,7 @@ public class EventQueue {
 	protected synchronized Task getNextTask() {
 		if(!this.isTaskQueued())
 			return null;
-		return tasks.remove(tasks.size() - 1);
+		return this.tasks.remove(this.tasks.size() - 1);
 	}
 
 	/**
@@ -105,7 +114,7 @@ public class EventQueue {
 		if(t == null)
 			return;
 		try{
-			t.execute();
+			t.run();
 		}catch(Throwable e){
 			throw new RuntimeException("Error executing task", e);
 		}
@@ -136,7 +145,7 @@ public class EventQueue {
 	 * Removes all queued tasks from the event queue.
 	 */
 	public void clearTasks() {
-		tasks.clear();
+		this.tasks.clear();
 	}
 
 	/**
@@ -144,7 +153,7 @@ public class EventQueue {
 	 * @return <b>true</b> if there is at least one task queued.
 	 */
 	public boolean isTaskQueued() {
-		return tasks.size() > 0;
+		return this.tasks.size() > 0;
 	}
 
 	/**
@@ -152,86 +161,6 @@ public class EventQueue {
 	 * @return The number of queued tasks.
 	 */
 	public int getQueuedTaskCount() {
-		return tasks.size();
-	}
-
-
-	public static abstract class Task {
-
-		private final int priority;
-		private Object[] args;
-
-		public Task(int priority, Object[] args) {
-			this.priority = priority;
-			this.args = args;
-		}
-
-
-		public int getPriority() {
-			return priority;
-		}
-
-		public Object[] getArgs() {
-			return args;
-		}
-
-		public abstract void execute() throws Throwable;
-	}
-
-	public static class ReflectTask extends Task {
-
-		private Method method;
-		private Object callerInstance;
-
-		/**
-		 * Constructs a new <b>ReflectTask</b>. ReflectTasks call the handler using Java reflection.
-		 * 
-		 * @param method         The method to be called when this task gets executed
-		 * @param callerInstance The instance the method is called with
-		 * @param args           Arguments to be passed to the called method
-		 * @param priority       The task priority. Higher priorities will be executed first
-		 */
-		public ReflectTask(Method method, Object callerInstance, Object[] args, int priority) {
-			super(priority, args);
-			this.method = method;
-			this.callerInstance = callerInstance;
-		}
-
-
-		@Override
-		public void execute() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-			method.invoke(callerInstance, super.getArgs());
-		}
-
-		public Method getMethod() {
-			return method;
-		}
-
-		public Object getCallerInstance() {
-			return callerInstance;
-		}
-	}
-
-	public static class LambdaTask extends Task {
-
-		private Consumer<Object[]> handler;
-
-		/**
-		 * Constructs a new <b>LambdaTask</b>.
-		 * 
-		 * @param run      The handler to be called when this task gets executed
-		 * @param args     Arguments to be passed to the handler
-		 * @param priority The task priority. Higher priorities will be executed first
-		 */
-		public LambdaTask(Consumer<Object[]> handler, Object[] args, int priority) {
-			super(priority, args);
-			this.handler = handler;
-		}
-
-
-		@Override
-		public void execute() {
-			handler.accept(super.getArgs());
-		}
+		return this.tasks.size();
 	}
 }

@@ -16,6 +16,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.omegazero.common.event.task.Task;
+
+/**
+ * Executor for {@link EventQueue}s.
+ * 
+ * @deprecated Since 2.6. Use a {@link TaskQueueExecutor} with a {@link java.util.concurrent.BlockingQueue} instead.
+ */
+@Deprecated
 public class EventQueueExecutor extends EventQueue {
 
 	private static HashMap<String, Integer> threadCounter = new HashMap<>();
@@ -149,14 +157,14 @@ public class EventQueueExecutor extends EventQueue {
 			if(!this.running)
 				return;
 			this.running = false;
-			for(WorkerThread thread : workerThreads){
+			for(WorkerThread thread : this.workerThreads){
 				if(!thread.executing)
 					thread.interrupt();
 			}
 			this.notifyAll();
 		}
 		if(blocking){
-			for(WorkerThread thread : workerThreads){
+			for(WorkerThread thread : this.workerThreads){
 				try{
 					thread.join();
 				}catch(InterruptedException e){

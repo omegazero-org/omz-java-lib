@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.omegazero.common.event.task.LambdaTask;
+
 /**
  * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's <tt>setTimeout</tt> and <tt>setInterval</tt>.<br>
  * <br>
@@ -30,7 +32,7 @@ public class TaskScheduler {
 
 	private long idCounter = 0;
 
-	private EventQueueExecutor executor = new EventQueueExecutor(false, "TaskScheduler");
+	private TaskQueueExecutor executor = TaskQueueExecutor.fromSequential().name("TaskScheduler").workerThreads(-1).build();
 
 	private Consumer<Throwable> errorHandler;
 
@@ -196,7 +198,6 @@ public class TaskScheduler {
 					executeNext();
 				}
 			}catch(InterruptedException e){
-				this.handleError(e);
 				break;
 			}catch(Exception e){
 				this.handleError(e);
@@ -306,15 +307,15 @@ public class TaskScheduler {
 
 
 	/**
-	 * Sets the error handler that will be called when an error occurs while queuing a task. Also {@linkplain sets the error handler} of this <code>TaskScheduler</code>'s
-	 * {@link EventQueueExecutor}.<br>
+	 * Sets the error handler that will be called when an error occurs while queuing a task. Also sets the error handler of this <code>TaskScheduler</code>'s
+	 * {@link TaskQueueExecutor}.<br>
 	 * <br>
-	 * If an error occurs while queuing a task, the error is {@linkplain Exception#printStackTrace() printed to <code>stderr</code>}. For default behavior when an error occurs
-	 * while running a task, see {@link EventQueueExecutor#setErrorHandler(Consumer)}.
+	 * If an error occurs while queuing a task and no handler is set, the error is {@linkplain Throwable#printStackTrace() printed to <code>stderr</code>}. For default
+	 * behavior when an error occurs while running a task, see {@link TaskQueueExecutor#setErrorHandler(Consumer)}.
 	 * 
 	 * @param errorHandler The error handler
 	 * @since 2.6
-	 * @see EventQueueExecutor#setErrorHandler(Consumer)
+	 * @see TaskQueueExecutor#setErrorHandler(Consumer)
 	 */
 	public void setErrorHandler(Consumer<Throwable> errorHandler) {
 		this.errorHandler = errorHandler;
@@ -325,23 +326,20 @@ public class TaskScheduler {
 	/**
 	 * Represents a task managed by a {@link TaskScheduler}.
 	 */
-	public class TimerTask {
+	public class TimerTask extends LambdaTask {
 
 		private final long id;
-		private final Consumer<Object[]> handler;
 		private long time;
 		private final long period;
-		private final Object[] args;
 
 		private boolean daemon;
 		private boolean canceled = false;
 
 		protected TimerTask(long id, Consumer<Object[]> handler, long time, long period, Object[] args) {
+			super(handler, args);
 			this.id = id;
-			this.handler = handler;
 			this.time = time;
 			this.period = period;
-			this.args = args;
 		}
 
 
@@ -389,10 +387,6 @@ public class TaskScheduler {
 			return this;
 		}
 
-		protected void run() {
-			this.handler.accept(this.args);
-		}
-
 
 		/**
 		 * 
@@ -416,14 +410,6 @@ public class TaskScheduler {
 		 */
 		public long getPeriod() {
 			return this.period;
-		}
-
-		/**
-		 * 
-		 * @return The arguments defined for this task
-		 */
-		public Object[] getArgs() {
-			return this.args;
 		}
 
 		/**

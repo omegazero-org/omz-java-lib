@@ -1,0 +1,21 @@
+{
+	"generator": "javadoc",
+	"targetName": "omz-java-lib",
+	"generatorOptions": {
+		"src": ["src"],
+		"packages": ["org"],
+		"windowtitle": "omegazero Java Common Library",
+		"doctitle": "omegazero Java Common Library documentation",
+		"header": "omz java lib",
+		"groups": {
+			"Base Packages": "org.omegazero.common:org.omegazero.common.*"
+		},
+		"links": [
+			"https://docs.oracle.com/javase/8/docs/api/",
+			"https://stleary.github.io/JSON-java/"
+		],
+		"dependencies": [
+			"maven/org.json:json:20211205"
+		]
+	}
+}

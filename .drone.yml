@@ -1,0 +1,31 @@
+
+kind: pipeline
+name: java8
+platform:
+  arch: amd64
+steps:
+- name: prepare-dependencies
+  image: omz-ci-tools
+  pull: never
+  commands:
+  - artifact-dl-java maven/org.json:json:20211205
+- name: build
+  image: openjdk:8
+  commands:
+  - find src -iname "*.java" > srcfiles
+  - mkdir bin
+  - javac -version -verbose -d bin @srcfiles -cp json-20211205.jar
+  - jar cf build.jar -C bin .
+  depends_on:
+  - prepare-dependencies
+- name: publish
+  image: omz-ci-tools
+  pull: never
+  commands:
+  - artifact-push-java build.jar omz/org.omegazero.common:common
+  depends_on:
+  - build
+  environment:
+    OMZ_ARTIFACT_PUSH_TOKEN:
+      from_secret: artifact_push_token
+

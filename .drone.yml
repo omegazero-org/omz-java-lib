@@ -1,14 +1,23 @@
 
 kind: pipeline
 name: java8
+
 platform:
   arch: amd64
+
 steps:
 - name: prepare-dependencies
   image: omz-ci-tools
   pull: never
   commands:
   - artifact-dl-java maven/org.json:json:20211205
+
+- name: prepare-source
+  image: omz-ci-tools
+  pull: never
+  commands:
+  - setversion src/org/omegazero/common/OmzLib.java
+
 - name: build
   image: openjdk:8
   commands:
@@ -18,6 +27,8 @@ steps:
   - jar cf build.jar -C bin .
   depends_on:
   - prepare-dependencies
+  - prepare-source
+
 - name: publish
   image: omz-ci-tools
   pull: never
@@ -28,4 +39,3 @@ steps:
   environment:
     OMZ_ARTIFACT_PUSH_TOKEN:
       from_secret: artifact_push_token
-

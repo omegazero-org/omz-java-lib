@@ -57,7 +57,7 @@ public final class Util {
 			sb.append('0');
 		sb.append(second).append('.');
 
-		long millis = System.currentTimeMillis() % 1000;
+		long millis = c.get(Calendar.MILLISECOND);
 		if(millis < 10)
 			sb.append('0');
 		if(millis < 100)

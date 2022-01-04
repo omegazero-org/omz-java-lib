@@ -14,6 +14,11 @@ package org.omegazero.common.util;
 import java.util.Calendar;
 import java.util.Random;
 
+/**
+ * Class containing several mostly unrelated utility methods.
+ * 
+ * @since 2.1
+ */
 public final class Util {
 
 	private static final String dayLabels[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -135,9 +140,9 @@ public final class Util {
 	 * <br>
 	 * If the caller thread is interrupted while waiting, this method returns.
 	 * 
-	 * @implNote The poll interval is 50 milliseconds, meaning this method may not return immediately after all said threads have exited.
 	 * @param timeout Maximum amount of time to wait for non-daemon threads to exit, in milliseconds. May be 0 to wait for an unlimited amount of time
 	 * @return <b>true</b> if this function returns because all non-daemon threads have exited, or <b>false</b> if the timeout was exceeded or this thread was interrupted
+	 * @implNote The poll interval is 50 milliseconds, meaning this method may not return immediately after all said threads have exited.
 	 */
 	public static boolean waitForNonDaemonThreads(int timeout) {
 		long start = System.currentTimeMillis();
@@ -154,6 +159,13 @@ public final class Util {
 	}
 
 
+	/**
+	 * Creates a string of the given <b>length</b> containing characters chosen pseudo-randomly from the set of characters used for hexadecimal encoding (<code>0 - 9</code>
+	 * and <code>a - f</code>).
+	 * 
+	 * @param length The length of the resulting string
+	 * @return The string containing random hex characters
+	 */
 	public static String randomHex(int length) {
 		StringBuilder sb = new StringBuilder(length);
 		int l = 0;

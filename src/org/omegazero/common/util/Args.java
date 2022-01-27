@@ -21,6 +21,10 @@ public class Args implements Serializable {
 
 	private final Map<String, Object> arguments = new HashMap<>();
 
+	@Deprecated
+	public Args() {
+	}
+
 
 	public void parseArguments(String[] args) {
 		for(int i = 0; i < args.length; i++){

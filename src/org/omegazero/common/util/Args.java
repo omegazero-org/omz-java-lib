@@ -15,17 +15,27 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class used for parsing command line arguments.
+ * 
+ * @since 2.1
+ */
 public class Args implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private final Map<String, Object> arguments = new HashMap<>();
+	protected final Map<String, Object> arguments = new HashMap<>();
 
 	@Deprecated
 	public Args() {
 	}
 
 
+	/**
+	 * Parses the given argument array and stores the data in this {@link Args} object. See {@link #parse(String[])}.
+	 * 
+	 * @param args The argument array
+	 */
 	public void parseArguments(String[] args) {
 		for(int i = 0; i < args.length; i++){
 			String arg = args[i];
@@ -41,6 +51,12 @@ public class Args implements Serializable {
 	}
 
 
+	/**
+	 * Returns the string value identified by the given <b>key</b>, or <code>null</code> if no value with the specified key exists.
+	 * 
+	 * @param key The key string
+	 * @return The value or <code>null</code> if it does not exist
+	 */
 	public String getValue(String key) {
 		Object v = this.arguments.get(key);
 		if(v != null)
@@ -49,6 +65,13 @@ public class Args implements Serializable {
 			return null;
 	}
 
+	/**
+	 * Returns the string value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public String getValueOrDefault(String key, String def) {
 		Object val = this.arguments.get(key);
 		if(val != null)
@@ -57,10 +80,24 @@ public class Args implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns the integer value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists or is not a number.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public int getIntOrDefault(String key, int def) {
 		return (int) this.getLongOrDefault(key, def);
 	}
 
+	/**
+	 * Returns the long integer value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists or is not a number.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public long getLongOrDefault(String key, long def) {
 		Object val = this.arguments.get(key);
 		if(val instanceof Number)
@@ -69,10 +106,24 @@ public class Args implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns the single-precision floating-point number value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists or is not a number.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public float getFloatOrDefault(String key, float def) {
 		return (float) this.getDoubleOrDefault(key, def);
 	}
 
+	/**
+	 * Returns the double-precision floating-point number value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists or is not a number.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public double getDoubleOrDefault(String key, double def) {
 		Object val = this.arguments.get(key);
 		if(val instanceof Number)
@@ -81,6 +132,13 @@ public class Args implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns the boolean value identified by the given <b>key</b>, or <b>def</b> if no value with the specified key exists or is not a boolean.
+	 * 
+	 * @param key The key string
+	 * @param def The default value to return if no value with the given <b>key</b> exists
+	 * @return The value or <b>def</b> if it does not exist
+	 */
 	public boolean getBooleanOrDefault(String key, boolean def) {
 		Object val = this.arguments.get(key);
 		if(val instanceof Boolean)
@@ -105,6 +163,25 @@ public class Args implements Serializable {
 	}
 
 
+	/**
+	 * Parses the given array of arguments in the following format:<br>
+	 * <br>
+	 * Arguments are parsed as key-value pairs. A key-value pair consists of a pair of elements in the given array: the first element is <code>--</code> followed by the key
+	 * string, the second element is the value string. For example:
+	 * 
+	 * <pre>
+	 * --exampleKey value
+	 * </pre>
+	 * 
+	 * The key is "<code>exampleKey</code>" and the value is "<code>value</code>". Values identified as integers, booleans ("<code>true</code>" and "<code>false</code>") or
+	 * floating-point numbers are automatically converted to the respective type.<br>
+	 * If a key string such as "<code>--key</code>" has no value (at the end of the array), it is ignored.<br>
+	 * <br>
+	 * To set a key (for example "<code>key</code>") to the boolean value <code>true</code>, the shorthand "<code>-key</code>" (single dash) may be used.
+	 * 
+	 * @param args The argument array
+	 * @return The {@link Args} object representing the parsed data
+	 */
 	public static Args parse(String[] args) {
 		Args a = new Args();
 		a.parseArguments(args);

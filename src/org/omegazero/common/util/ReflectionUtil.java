@@ -14,16 +14,35 @@ package org.omegazero.common.util;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 
+/**
+ * Contains utility methods for use with reflection.
+ * 
+ * @since 2.1
+ */
 public final class ReflectionUtil {
+
 
 	private ReflectionUtil() {
 	}
 
 
+	/**
+	 * Returns the method type signature of the given {@link Method}.
+	 * 
+	 * @param m The method
+	 * @return The type signature of the given method
+	 */
 	public static String getMethodSignature(Method m) {
 		return getMethodSignature(m.getReturnType(), m.getParameterTypes());
 	}
 
+	/**
+	 * Returns the method type signature of a method with the given <b>returnType</b> and <b>parameterTypes</b>.
+	 * 
+	 * @param returnType     The return type
+	 * @param parameterTypes The parameter types
+	 * @return The type signature of a method with the given types
+	 */
 	public static String getMethodSignature(Class<?> returnType, Class<?>[] parameterTypes) {
 		StringBuilder sb = new StringBuilder("(");
 		if(parameterTypes != null)
@@ -33,6 +52,12 @@ public final class ReflectionUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * Returns the type signature string of the given type, for example "<code>I</code>" or "<code>Ljava.lang.String;</code>".
+	 * 
+	 * @param cl The class
+	 * @return The type signature
+	 */
 	public static String getSignatureOfClass(Class<?> cl) {
 		if(cl == void.class)
 			return "V";
@@ -41,6 +66,14 @@ public final class ReflectionUtil {
 	}
 
 
+	/**
+	 * Checks whether the given method has the given <b>name</b> and <b>parameterTypes</b>.
+	 * 
+	 * @param m              The method
+	 * @param name           The method name to compare to
+	 * @param parameterTypes The parameter types to compare to
+	 * @return <code>true</code> if the given method has the given <b>name</b> and <b>parameterTypes</b>.
+	 */
 	public static boolean isMethod(Method m, String name, Class<?>[] parameterTypes) {
 		if(!m.getName().equals(name))
 			return false;

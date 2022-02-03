@@ -17,6 +17,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An <code>EventBus</code> is used for {@linkplain #dispatchEvent(Event, Object...) dispatching} <code>Event</code>s to event bus {@linkplain Subscriber subscribers} which
+ * are listening for the specific event and {@linkplain #register(Subscriber, String...) registered} in this <code>EventBus</code>.<br>
+ * <br>
+ * An event bus subscriber is listening for an event if its class contains a method with the name given in the <code>Event</code> instance, matching parameters and the
+ * {@link SubscribeEvent} annotation. The {@link SubscribeEvent} annotation may contain the optional argument {@link SubscribeEvent#priority()}. The handlers with priority
+ * <i>HIGHEST</i> will be invoked first, the handlers with priority <i>LOWEST</i> will be executed last. The order of execution of multiple handlers with the same priority is
+ * undefined.<br>
+ * <br>
+ * During execution of this event, any handler may cancel the event using {@link Event#cancel()} if {@link Event#isCancelable()} is <code>true</code>, in which case the event
+ * will be stopped being delivered to subsequent event handlers.<br>
+ * <br>
+ * If {@link Event#isIncludeAllReturns()} is <code>false</code>, event delivery will be stopped as soon as the first listener returns a non-<code>null</code> value. If the
+ * event return type is <code>void</code>, all listeners will be attempted to be executed, because <code>void</code> methods always effectively return <code>null</code>.
+ * 
+ * @since 2.1
+ */
 public class EventBus {
 
 	private final List<Subscriber> subscribers = new ArrayList<>();
@@ -29,7 +46,7 @@ public class EventBus {
 	 * <br>
 	 * The class is derived from the given <b>instance</b> parameter.
 	 * 
-	 * @param instance
+	 * @param instance The instance of the event bus subscriber. The class of the instance must have the {@link EventBusSubscriber} annotation
 	 */
 	public void register(Object instance, String... forcedEvents) {
 		this.register(new Subscriber(instance), forcedEvents);
@@ -38,11 +55,10 @@ public class EventBus {
 	/**
 	 * Adds a listener for type <b>type</b> to the list of listeners receiving events from the event bus.<br>
 	 * <br>
-	 * Note that non-static methods cannot be used as listeners using this method. To use non-static methods, pass an instance with {@link EventBus#register(Class, Object)} or
-	 * {@link EventBus#register(Object)}.
+	 * Note that non-static methods cannot be used as listeners using this method. To use non-static methods, pass an instance with {@link #register(Class, Object)} or
+	 * {@link #register(Object)}.
 	 * 
-	 * @param type
-	 * @param instance
+	 * @param type The type of the event bus subscriber. This class must have the {@link EventBusSubscriber} annotation
 	 */
 	public void register(Class<?> type, String... forcedEvents) {
 		this.register(new Subscriber(type), forcedEvents);
@@ -51,8 +67,8 @@ public class EventBus {
 	/**
 	 * Adds the <b>instance</b> of type <b>type</b> to the list of listeners receiving events from the event bus.
 	 * 
-	 * @param type
-	 * @param instance
+	 * @param type     The type of the event bus subscriber. This class must have the {@link EventBusSubscriber} annotation
+	 * @param instance The instance of the event bus subscriber
 	 */
 	public void register(Class<?> type, Object instance, String... forcedEvents) {
 		this.register(new Subscriber(type, instance), forcedEvents);
@@ -61,44 +77,55 @@ public class EventBus {
 	/**
 	 * Adds the event bus subscriber to the list of listeners receiving events from the event bus.
 	 * 
-	 * @param subscriber
+	 * @param subscriber The event bus subscriber
 	 */
 	public synchronized void register(Subscriber subscriber, String... forcedEvents) {
+		if(this.subscribers.contains(subscriber))
+			throw new IllegalStateException("The given subscriber is already registered");
 		if(forcedEvents.length > 0)
 			subscriber.setForcedEvents(forcedEvents);
-		subscribers.add(subscriber);
+		this.subscribers.add(subscriber);
 		this.flushEventCache();
 	}
 
 	/**
-	 * Removes the event bus subscriber with <b>instance</b> from the list of listeners receiving events from the event bus.
+	 * Removes the given event bus subscriber from the list of listeners receiving events from the event bus.
 	 * 
-	 * @param instance
+	 * @param subscriber The event bus subscriber instance
+	 * @return <code>true</code> if the given <b>subscriber</b> was registered
+	 * @since 2.7
+	 */
+	public synchronized boolean unregister(Subscriber subscriber) {
+		if(this.subscribers.remove(subscriber)){
+			this.flushEventCache();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Removes the event bus subscriber with <b>instance</b> from the list of listeners receiving events from the event bus. This method effectively does nothing if the given
+	 * <b>instance</b> is not the instance of a registered event bus subscriber.
+	 * 
+	 * @param subscriber The event bus subscriber instance
 	 */
 	public synchronized void unregister(Object instance) {
-		boolean b = false;
-		for(int i = 0; i < subscribers.size(); i++)
-			if(subscribers.get(i).equals(instance)){
-				subscribers.remove(i);
-				b = true;
-			}
-		if(b)
+		if(this.subscribers.removeIf((sub) -> {
+			return sub.getInstance().equals(instance);
+		}))
 			this.flushEventCache();
 	}
 
 	/**
-	 * Removes all event bus subscribers of the given type from the list of listeners receiving events from the event bus.
+	 * Removes all event bus subscribers of the given type from the list of listeners receiving events from the event bus. This method effectively does nothing if the given
+	 * <b>instance</b> is not a registered event bus subscriber.
 	 * 
-	 * @param type
+	 * @param type The type
 	 */
 	public synchronized void unregister(Class<?> type) {
-		boolean b = false;
-		for(int i = 0; i < subscribers.size(); i++)
-			if(subscribers.get(i).getType().equals(type)){
-				subscribers.remove(i);
-				b = true;
-			}
-		if(b)
+		if(this.subscribers.removeIf((sub) -> {
+			return sub.getType().equals(type);
+		}))
 			this.flushEventCache();
 	}
 
@@ -109,31 +136,22 @@ public class EventBus {
 	 * The next time an event is dispatched, the list of listeners must be rebuilt from the list of subscribers.
 	 */
 	public synchronized void flushEventCache() {
-		eventCache.clear();
+		this.eventCache.clear();
 	}
 
 
 	/**
-	 * @return The number of registered event bus subscribers.
+	 * Returns the number of registered event bus subscribers.
+	 * 
+	 * @return The number of registered event bus subscribers
 	 */
 	public int getSubscriberCount() {
-		return subscribers.size();
+		return this.subscribers.size();
 	}
 
 
 	/**
 	 * Dispatches the given <b>event</b> to all event bus subscribers listening for this event.<br>
-	 * <br>
-	 * An event bus subscriber is listening for an event if its class contains a method with the name given in the event instance, matching parameters and the
-	 * {@link SubscribeEvent} annotation. The {@link SubscribeEvent} annotation may contain the optional argument {@link SubscribeEvent#priority()}. The handlers with priority
-	 * <i>HIGHEST</i> will be invoked first, the handlers with priority <i>LOWEST</i> will be executed last.<br>
-	 * <br>
-	 * During execution of this event, any handler may cancel the event using {@link Event#cancel()} if {@link Event#isCancelable()} is <code>true</code>, in which case the
-	 * event will be stopped being delivered to subsequent event handlers.<br>
-	 * <br>
-	 * If and {@link Event#isIncludeAllReturns()} is <code>false</code>, event delivery will be stopped as soon as the first listener returns a non-<code>null</code> value. If
-	 * the event return type is <code>void</code>, all listeners will be attempted to be executed, because <code>void</code> methods effectively always return
-	 * <code>null</code>.<br>
 	 * <br>
 	 * This method may be used instead of {@link EventBus#dispatchEventRes(Event, Object...)} if return types are not needed to save resources, because no
 	 * <code>EventResult</code> object is being created.
@@ -142,7 +160,8 @@ public class EventBus {
 	 * @param args  Arguments to be passed to event listeners
 	 * @throws EventBusException If an error occurs during execution of an event handler
 	 * @return The number of executed event handlers
-	 * @see EventBus#dispatchEventRes(Event, Object...)
+	 * @see #dispatchEventRes(Event, Object...)
+	 * @see EventBus
 	 */
 	public int dispatchEvent(Event event, Object... args) {
 		return this.dispatchEvent0(event, null, args);
@@ -156,7 +175,8 @@ public class EventBus {
 	 * @param args  Arguments to be passed to event listeners
 	 * @throws EventBusException If an error occurs during execution of an event handler
 	 * @return An <code>EventResult</code> object containing data about this event dispatch
-	 * @see EventBus#dispatchEvent(Event, Object...)
+	 * @see #dispatchEvent(Event, Object...)
+	 * @see EventBus
 	 */
 	public EventResult dispatchEventRes(Event event, Object... args) {
 		EventResult res = new EventResult();

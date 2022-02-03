@@ -53,7 +53,7 @@ public final class ReflectionUtil {
 	}
 
 	/**
-	 * Returns the type signature string of the given type, for example "<code>I</code>" or "<code>Ljava.lang.String;</code>".
+	 * Returns the type signature string of the given type, for example "<code>I</code>" or "<code>Ljava/lang/String;</code>".
 	 * 
 	 * @param cl The class
 	 * @return The type signature
@@ -62,7 +62,7 @@ public final class ReflectionUtil {
 		if(cl == void.class)
 			return "V";
 		String sig = Array.newInstance(cl, 0).toString();
-		return sig.substring(1, sig.indexOf('@'));
+		return sig.substring(1, sig.indexOf('@')).replace('.', '/');
 	}
 
 

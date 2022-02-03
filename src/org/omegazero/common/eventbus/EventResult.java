@@ -11,34 +11,50 @@
  */
 package org.omegazero.common.eventbus;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Contains result data of the execution of an {@link Event}, returned by {@link EventBus#dispatchEventRes(Event, Object...)}.
+ * 
+ * @since 2.1
+ */
 public class EventResult {
 
-	private int listeners;
-	private Object returnValue;
-	private final List<Object> returnValues = new ArrayList<Object>();
+	int listeners;
+	Object returnValue;
+	List<Object> returnValues;
+
+	EventResult() {
+	}
 
 
+	/**
+	 * Returns the number of event handlers that were executed.
+	 * 
+	 * @return The number of executed event handlers
+	 */
 	public int getListeners() {
-		return listeners;
+		return this.listeners;
 	}
 
-	protected void setListeners(int listeners) {
-		this.listeners = listeners;
-	}
-
+	/**
+	 * Returns the single return value of the event execution. If the event was configured to collect {@linkplain Event#isIncludeAllReturns() all return values}, this method
+	 * returns <code>null</code>.
+	 * 
+	 * @return The single return value
+	 */
 	public Object getReturnValue() {
-		return returnValue;
+		return this.returnValue;
 	}
 
-	protected void setReturnValue(Object returnValue) {
-		this.returnValue = returnValue;
-	}
-
+	/**
+	 * Returns the list of all collected return values, excluding <code>null</code>. If the event was not configured to collect {@linkplain Event#isIncludeAllReturns() all
+	 * return values}, this method returns <code>null</code>.
+	 * 
+	 * @return The list of all return values
+	 */
 	public List<Object> getReturnValues() {
-		return returnValues;
+		return this.returnValues;
 	}
 
 	@Override

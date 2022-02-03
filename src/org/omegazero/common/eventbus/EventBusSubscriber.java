@@ -16,6 +16,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation required in classes registered as an {@link EventBus} subscriber.
+ * 
+ * @since 2.1
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = { ElementType.TYPE })
 public @interface EventBusSubscriber {

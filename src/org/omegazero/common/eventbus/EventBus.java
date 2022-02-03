@@ -24,13 +24,13 @@ import java.util.Map;
  * An event bus subscriber is listening for an event if its class contains a method with the name given in the <code>Event</code> instance, matching parameters and the
  * {@link SubscribeEvent} annotation. The {@link SubscribeEvent} annotation may contain the optional argument {@link SubscribeEvent#priority()}. The handlers with priority
  * <i>HIGHEST</i> will be invoked first, the handlers with priority <i>LOWEST</i> will be executed last. The order of execution of multiple handlers with the same priority is
- * undefined.<br>
+ * undefined. An event bus subscriber can {@linkplain Subscriber#setForcedEvents(String[]) declare itself} as listening for specific events. If an attempt is made to execute
+ * an event but no handler method is found in the subscriber class, event execution will fail.<br>
  * <br>
  * During execution of this event, any handler may cancel the event using {@link Event#cancel()} if {@link Event#isCancelable()} is <code>true</code>, in which case the event
- * will be stopped being delivered to subsequent event handlers.<br>
- * <br>
- * If {@link Event#isIncludeAllReturns()} is <code>false</code>, event delivery will be stopped as soon as the first listener returns a non-<code>null</code> value. If the
- * event return type is <code>void</code>, all listeners will be attempted to be executed, because <code>void</code> methods always effectively return <code>null</code>.
+ * will be stopped being delivered to subsequent event handlers. If {@link Event#isIncludeAllReturns()} is <code>false</code>, event delivery will be stopped as soon as the
+ * first listener returns a non-<code>null</code> value. If the event return type is <code>void</code>, all listeners will be attempted to be executed, because
+ * <code>void</code> methods always effectively return <code>null</code>.
  * 
  * @since 2.1
  */
@@ -181,7 +181,7 @@ public class EventBus {
 	public EventResult dispatchEventRes(Event event, Object... args) {
 		EventResult res = new EventResult();
 		int c = this.dispatchEvent0(event, res, args);
-		res.setListeners(c);
+		res.listeners = c;
 		return res;
 	}
 
@@ -190,7 +190,7 @@ public class EventBus {
 		if(subs == null){
 			subs = new ArrayList<Subscriber>();
 			for(Subscriber sub : this.subscribers){
-				boolean av = sub.isListenerMethodForEventAvailable(event, args);
+				boolean av = sub.isListenerMethodForEventAvailable(event);
 				if(av)
 					subs.add(sub);
 				else if(sub.isForcedEvent(event))
@@ -201,8 +201,8 @@ public class EventBus {
 
 				@Override
 				public int compare(Subscriber s1, Subscriber s2) {
-					return s2.getListenerMethodForEvent(event, args).getAnnotation(SubscribeEvent.class).priority().value()
-							- s1.getListenerMethodForEvent(event, args).getAnnotation(SubscribeEvent.class).priority().value();
+					return s2.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class).priority().value()
+							- s1.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class).priority().value();
 				}
 			});
 			this.eventCache.put(event.getEventSignature(), subs);
@@ -213,6 +213,8 @@ public class EventBus {
 	private int dispatchEvent0(Event event, EventResult res, Object[] args) {
 		List<Subscriber> subs = this.getSortedEventSubscriberList(event, args);
 		int listeners = 0;
+		if(event.isIncludeAllReturns())
+			res.returnValues = new ArrayList<>();
 		for(Subscriber sub : subs){
 			try{
 				Object ret = sub.runEvent(event, args);
@@ -220,10 +222,10 @@ public class EventBus {
 				if(ret != null){
 					if(event.isIncludeAllReturns()){
 						if(res != null)
-							res.getReturnValues().add(ret);
+							res.returnValues.add(ret);
 					}else{
 						if(res != null)
-							res.setReturnValue(ret);
+							res.returnValue = ret;
 						break;
 					}
 				}

@@ -11,14 +11,30 @@
  */
 package org.omegazero.common.eventbus;
 
+/**
+ * An exception thrown when an error occurs during execution of an {@link EventBus} subscriber handler method.
+ * 
+ * @since 2.1
+ */
 public class EventBusException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Creates a {@link EventBusException} with the specified message.
+	 * 
+	 * @param msg The message
+	 */
 	public EventBusException(String msg) {
 		super(msg);
 	}
 
+	/**
+	 * Creates a {@link EventBusException} with the specified message and cause.
+	 * 
+	 * @param msg The message
+	 * @param e   The cause
+	 */
 	public EventBusException(String msg, Throwable e) {
 		super(msg, e);
 	}

@@ -18,6 +18,11 @@ import java.util.Objects;
 
 import org.omegazero.common.util.ReflectionUtil;
 
+/**
+ * Represents an {@link EventBus} subscriber. This class wraps an event bus subscriber class and instance.
+ * 
+ * @since 2.1
+ */
 public class Subscriber {
 
 	private final Class<?> type;
@@ -28,11 +33,11 @@ public class Subscriber {
 	private final Map<String, Method> methodCache = new HashMap<>();
 
 	/**
-	 * Alias for {@link Subscriber#Subscriber(Class, Object)}.<br>
+	 * Alias for {@link #Subscriber(Class, Object)}.<br>
 	 * <br>
 	 * The <b>type</b> parameter is derived from the given <b>instance</b> parameter.
 	 * 
-	 * @param instance
+	 * @param instance The subscriber instance
 	 */
 	public Subscriber(Object instance) {
 		this(instance.getClass(), instance);
@@ -44,9 +49,9 @@ public class Subscriber {
 	 * The class <b>type</b> must have the annotation {@link EventBusSubscriber} set.<br>
 	 * <br>
 	 * Only static event listener methods can be called when using this constructor. To be able to use non-static methods, pass an instance with
-	 * {@link Subscriber#Subscriber(Class, Object)} or {@link Subscriber#Subscriber(Object)}.
+	 * {@link #Subscriber(Class, Object)} or {@link #Subscriber(Object)}.
 	 * 
-	 * @param instance
+	 * @param type The class of the subscriber
 	 */
 	public Subscriber(Class<?> type) {
 		this(type, null);
@@ -59,8 +64,8 @@ public class Subscriber {
 	 * <br>
 	 * The object given in <b>instance</b> will be the instance the method is called with.
 	 * 
-	 * @param type
-	 * @param instance
+	 * @param type     The class of the subscriber
+	 * @param instance The subscriber instance
 	 */
 	public Subscriber(Class<?> type, Object instance) {
 		this.type = Objects.requireNonNull(type);
@@ -88,10 +93,9 @@ public class Subscriber {
 	 * The result of this method will be cached, including when a method was not found.
 	 * 
 	 * @param event The event to find a suitable method for
-	 * @param args
 	 * @return The valid event listener method, or <code>null</code> if the method was not found
 	 */
-	public Method getListenerMethodForEvent(Event event, Object... args) {
+	public Method getListenerMethodForEvent(Event event) {
 		return this.getListenerMethodWSig(event.getMethodName(), event.getParams(), event.getReturnType(), event.getEventSignature());
 	}
 
@@ -99,11 +103,10 @@ public class Subscriber {
 	 * Checks if there is a valid listener method available at this event bus subscriber.
 	 * 
 	 * @param event The event to check
-	 * @param args
 	 * @return <code>true</code> if a valid listener method for this event was found, <b>false</b> otherwise
 	 */
-	public boolean isListenerMethodForEventAvailable(Event event, Object... args) {
-		return this.getListenerMethodForEvent(event, args) != null;
+	public boolean isListenerMethodForEventAvailable(Event event) {
+		return this.getListenerMethodForEvent(event) != null;
 	}
 
 
@@ -123,8 +126,8 @@ public class Subscriber {
 
 	private Method getListenerMethodWSig(String name, Class<?>[] parameterTypes, Class<?> returnType, String eventSig) {
 		Method method = null;
-		if(methodCache.containsKey(eventSig)){
-			method = methodCache.get(eventSig);
+		if(this.methodCache.containsKey(eventSig)){
+			method = this.methodCache.get(eventSig);
 		}else{
 			Method[] methods = this.type.getMethods();
 			for(Method m : methods){
@@ -133,30 +136,57 @@ public class Subscriber {
 					break;
 				}
 			}
-			methodCache.put(eventSig, method);
+			this.methodCache.put(eventSig, method);
 		}
 		return method;
 	}
 
 
+	/**
+	 * Returns the class of the event bus subscriber instance this {@link Subscriber} wraps.
+	 * 
+	 * @return The subscriber type
+	 */
 	public Class<?> getType() {
 		return this.type;
 	}
 
+	/**
+	 * Returns the event bus subscriber instance this {@link Subscriber} wraps.
+	 * 
+	 * @return The subscriber instance
+	 */
 	protected Object getInstance() {
 		return this.instance;
 	}
 
 
+	/**
+	 * Returns the array of event method names the subscriber has declared itself as listening to. See {@link #setForcedEvents(String[])}.
+	 * 
+	 * @return The array of event method names
+	 */
 	public String[] getForcedEvents() {
-		return forcedEvents;
+		return this.forcedEvents;
 	}
 
+	/**
+	 * Sets the array of event method names the subscriber declares itself as listening to. If no suitable handler method is found when attempting to execute an event with a
+	 * method name in this array, event execution will fail with an {@link EventBusException}.
+	 * 
+	 * @param forcedEvents The array of event method names
+	 */
 	public void setForcedEvents(String[] forcedEvents) {
 		this.forcedEvents = forcedEvents;
 	}
 
 
+	/**
+	 * Checks if this {@link Subscriber} has explicitly declared itself as listening to the given <b>event</b> using {@link #setForcedEvents(String[])}.
+	 * 
+	 * @param event The event
+	 * @return <code>true</code> if this subscriber has declared itself as listening to the given <b>event</b>
+	 */
 	public boolean isForcedEvent(Event event) {
 		if(this.forcedEvents == null)
 			return false;
@@ -173,13 +203,13 @@ public class Subscriber {
 	 * <br>
 	 * A handler method must have the annotation {@link SubscribeEvent} with the optional {@link SubscribeEvent#priority()} argument.
 	 * 
-	 * @param event The event to be dispatched to the event bus subscriber.
-	 * @param args
-	 * @throws ReflectiveOperationException
+	 * @param event The event to be dispatched to the event bus subscriber
+	 * @param args  Arguments to be passed to the event method
+	 * @throws ReflectiveOperationException If a reflection operation fails
 	 * @see {@link EventBus#dispatchEvent(Event, Object...)}
 	 */
 	public Object runEvent(Event event, Object... args) throws ReflectiveOperationException {
-		Method m = this.getListenerMethodForEvent(event, args);
+		Method m = this.getListenerMethodForEvent(event);
 		if(m == null)
 			throw new NoSuchMethodException("No listener method for event '" + event.getMethodName() + "'");
 		return this.runEventMethod(m, args);
@@ -190,9 +220,9 @@ public class Subscriber {
 	 * <br>
 	 * <b>eventListener</b> must be a valid event listener. See {@link Subscriber#runEvent(Event, Object...)}.
 	 * 
-	 * @param eventListener A valid event listener method.
-	 * @param args          Arguments to be passed to the event method.
-	 * @throws ReflectiveOperationException
+	 * @param eventListener A valid event listener method
+	 * @param args          Arguments to be passed to the event method
+	 * @throws ReflectiveOperationException If a reflection operation fails
 	 */
 	public Object runEventMethod(Method eventListener, Object... args) throws ReflectiveOperationException {
 		if(!isValidListenerMethod(eventListener))

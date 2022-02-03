@@ -86,4 +86,24 @@ public final class ReflectionUtil {
 		}
 		return true;
 	}
+
+
+	/**
+	 * Returns an array containing the types of each object in the given <b>array</b>. If an element in the given array is <code>null</code>, the returned array will contain
+	 * the <code>void</code> class at its position.
+	 * 
+	 * @param array The object array
+	 * @return The array of types
+	 * @since 2.7
+	 */
+	public static Class<?>[] getTypesFromObjectArray(Object[] array) {
+		Class<?>[] types = new Class<?>[array.length];
+		for(int i = 0; i < array.length; i++){
+			if(array[i] == null)
+				types[i] = void.class;
+			else
+				types[i] = array[i].getClass();
+		}
+		return types;
+	}
 }

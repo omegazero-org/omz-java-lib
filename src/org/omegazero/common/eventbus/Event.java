@@ -194,17 +194,6 @@ public class Event {
 	}
 
 
-	public static Class<?>[] getTypesFromObjectArray(Object[] obj) {
-		Class<?>[] types = new Class<?>[obj.length];
-		for(int i = 0; i < obj.length; i++){
-			if(obj[i] == null)
-				types[i] = void.class;
-			else
-				types[i] = obj[i].getClass();
-		}
-		return types;
-	}
-
 	public static String createEventSignature(String methodName, Class<?>[] params, Class<?> returnType) {
 		return ReflectionUtil.getMethodSignature(returnType, params) + " " + methodName;
 	}

@@ -11,9 +11,6 @@
  */
 package org.omegazero.common;
 
-import org.omegazero.common.logging.Logger;
-import org.omegazero.common.logging.LoggerUtil;
-
 /**
  * This class contains metadata about <i>omz-java-lib</i> (for example the {@linkplain #VERSION version string}).
  */
@@ -22,18 +19,24 @@ public class OmzLib {
 	/**
 	 * The version string of <i>omz-java-lib</i>.<br>
 	 * <br>
-	 * This value is set by the build CI pipeline based on the event that triggered the build. Otherwise, this string is always <code>"$BUILDVERSION"</code>.
+	 * This value is set by the CI build pipeline based on the event that triggered the build. Otherwise, this string is always <code>"$BUILDVERSION"</code>.
 	 */
 	public static final String VERSION = "$BUILDVERSION";
 
 
-	private static final Logger logger = LoggerUtil.createLogger();
-
-
 	/**
-	 * Prints the version string and configured log level using a standard {@link Logger}.
+	 * Prints the version string and configured log level using a <code>Logger</code> from the <i>logging</i> library. If the library is not available, the string is printed
+	 * to <code>System.err</code>.
 	 */
 	public static void printBrand() {
-		logger.info("omz-java-lib version " + OmzLib.VERSION + " (log level " + LoggerUtil.getLogLevel().name() + ")");
+		String s = "omz-java-lib version " + OmzLib.VERSION;
+		try{
+			Class<?> loggerUtilCl = Class.forName("org.omegazero.common.logging.LoggerUtil");
+			Class<?> loggerCl = Class.forName("org.omegazero.common.logging.Logger");
+			Object logger = loggerCl.getMethod("create").invoke(null);
+			loggerCl.getMethod("info", Object[].class).invoke(logger, (Object) new Object[] { s, " (log level: ", loggerUtilCl.getMethod("getLogLevel").invoke(null), ")" });
+		}catch(ReflectiveOperationException e){
+			System.err.println(s);
+		}
 	}
 }

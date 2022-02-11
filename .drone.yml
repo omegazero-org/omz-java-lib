@@ -10,32 +10,88 @@ steps:
   image: omz-ci-tools
   pull: never
   commands:
-  - artifact-dl-java maven/org.json:json:20211205
+  - artifact-dl-java mvncentral/org.json:json:20211205
 
 - name: prepare-source
   image: omz-ci-tools
   pull: never
   commands:
-  - setversion src/org/omegazero/common/OmzLib.java
+  - mkdir build
+  - setversion util/main/java/org/omegazero/common/OmzLib.java
 
-- name: build
+- name: build-util
   image: openjdk:8
   commands:
-  - find src -iname "*.java" > srcfiles
-  - mkdir bin
-  - javac -version -verbose -d bin @srcfiles -cp json-20211205.jar
-  - jar cf build.jar -C bin .
+  - mkdir -p build/util/bin
+  - find util/main/java -iname "*.java" > build/util/srcfiles
+  - javac -version -verbose -d build/util/bin @build/util/srcfiles
+  - jar cf build-util.jar -C build/util/bin .
   depends_on:
   - prepare-dependencies
   - prepare-source
+
+- name: build-config
+  image: openjdk:8
+  commands:
+  - mkdir -p build/config/bin
+  - find config/main/java -iname "*.java" > build/config/srcfiles
+  - javac -version -verbose -d build/config/bin @build/config/srcfiles -cp json-20211205.jar
+  - jar cf build-config.jar -C build/config/bin .
+  depends_on:
+  - prepare-dependencies
+  - prepare-source
+
+- name: build-events
+  image: openjdk:8
+  commands:
+  - mkdir -p build/events/bin
+  - find events/main/java -iname "*.java" > build/events/srcfiles
+  - javac -version -verbose -d build/events/bin @build/events/srcfiles -cp build-util.jar
+  - jar cf build-events.jar -C build/events/bin .
+  depends_on:
+  - prepare-dependencies
+  - prepare-source
+  - build-util
+
+- name: build-logging
+  image: openjdk:8
+  commands:
+  - mkdir -p build/logging/bin
+  - find logging/main/java -iname "*.java" > build/logging/srcfiles
+  - javac -version -verbose -d build/logging/bin @build/logging/srcfiles -cp build-util.jar:build-events.jar
+  - jar cf build-logging.jar -C build/logging/bin .
+  depends_on:
+  - prepare-dependencies
+  - prepare-source
+  - build-util
+  - build-events
+
+- name: build-all
+  image: openjdk:8
+  commands:
+  - mkdir -p build/misc/bin
+  - find misc/main/java -iname "*.java" > build/misc/srcfiles
+  - javac -version -verbose -d build/misc/bin @build/misc/srcfiles -cp build-util.jar:build-config.jar:build-events.jar:build-logging.jar
+  - mkdir -p build/all/bin
+  - cp -r build/util/bin/* build/config/bin/* build/events/bin/* build/logging/bin/* build/misc/bin/* build/all/bin
+  - jar cf build-all.jar -C build/all/bin .
+  depends_on:
+  - build-util
+  - build-config
+  - build-events
+  - build-logging
 
 - name: publish
   image: omz-ci-tools
   pull: never
   commands:
-  - artifact-push-java build.jar omz/org.omegazero.common:common
+  - artifact-push-java build-all.jar omz/org.omegazero.common:omz-common
+  - artifact-push-java build-util.jar omz/org.omegazero.common:omz-common-util
+  - artifact-push-java build-config.jar omz/org.omegazero.common:omz-common-config
+  - artifact-push-java build-events.jar omz/org.omegazero.common:omz-common-events
+  - artifact-push-java build-logging.jar omz/org.omegazero.common:omz-common-logging
   depends_on:
-  - build
+  - build-all
   environment:
     OMZ_ARTIFACT_PUSH_TOKEN:
       from_secret: artifact_push_token

@@ -2,20 +2,30 @@
 	"generator": "javadoc",
 	"targetName": "omz-java-lib",
 	"generatorOptions": {
-		"src": ["src"],
+		"src": [
+			"common/main/java",
+			"config/main/java",
+			"events/main/java",
+			"logging/main/java",
+			"plugins/main/java",
+			"util/main/java"
+		],
 		"packages": ["org"],
 		"windowtitle": "omegazero Java Common Library",
 		"doctitle": "omegazero Java Common Library documentation",
 		"header": "omz java lib",
 		"groups": {
-			"Base Packages": "org.omegazero.common:org.omegazero.common.*"
+			"Lib: util": "org.omegazero.common:org.omegazero.common.util:org.omegazero.common.util.*",
+			"Lib: config": "org.omegazero.common.config:org.omegazero.common.config.*",
+			"Lib: events": "org.omegazero.common.event:org.omegazero.common.event.*:org.omegazero.common.eventbus:org.omegazero.common.eventbus.*",
+			"Lib: logging": "org.omegazero.common.logging:org.omegazero.common.logging.*"
 		},
 		"links": [
 			"https://docs.oracle.com/javase/8/docs/api/",
 			"https://stleary.github.io/JSON-java/"
 		],
 		"dependencies": [
-			"maven/org.json:json:20211205"
+			"mvncentral/org.json:json:20211205"
 		]
 	}
 }

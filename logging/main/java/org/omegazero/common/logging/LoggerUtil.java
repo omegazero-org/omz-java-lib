@@ -35,6 +35,8 @@ import org.omegazero.common.util.PropertyUtil;
  */
 public final class LoggerUtil {
 
+	private static final String[] SKIP_CLASSES = { "sun.reflect", "java.lang.reflect", "jdk.internal.reflect" };
+
 	private static final Logger logger = LoggerUtil.createLogger();
 
 	public static final int SAVE_INTERVAL = PropertyUtil.getInt("org.omegazero.common.logging.saveInterval", 300) * 1000;
@@ -114,9 +116,24 @@ public final class LoggerUtil {
 	}
 
 	protected static Logger createLogger(int off) {
-		StackTraceElement ste = Thread.currentThread().getStackTrace()[3 + off];
-		String fullName = ste.getClassName();
-		String[] str = ste.getClassName().split("\\.");
+		StackTraceElement[] st = Thread.currentThread().getStackTrace();
+		StackTraceElement caller = null;
+		for(int i = 3 + off; i < st.length; i++){
+			String name = st[i].getClassName();
+			boolean skip = false;
+			for(String s : SKIP_CLASSES){
+				if(name.startsWith(s)){
+					skip = true;
+					break;
+				}
+			}
+			if(!skip){
+				caller = st[i];
+				break;
+			}
+		}
+		String fullName = caller.getClassName();
+		String[] str = fullName.split("\\.");
 		String label = str[str.length - 1];
 		new LUPermission("logger", "create", fullName).check();
 		return new Logger(fullName, label);
@@ -237,12 +254,10 @@ public final class LoggerUtil {
 	 */
 	public static synchronized void flushLogBuffer() {
 		if(LoggerUtil.logBuffer.size() > 0 && LoggerUtil.logFile != null){
-			try{
-				Writer w = new BufferedWriter(new FileWriter(LoggerUtil.logFile, true));
+			try(Writer w = new BufferedWriter(new FileWriter(LoggerUtil.logFile, true))){
 				for(String l : LoggerUtil.logBuffer){
 					w.append(l + "\n");
 				}
-				w.close();
 			}catch(IOException e){
 				logger.fatal("Error while saving log file: " + e);
 			}

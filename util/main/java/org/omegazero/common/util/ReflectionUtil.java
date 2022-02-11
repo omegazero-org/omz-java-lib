@@ -67,12 +67,13 @@ public final class ReflectionUtil {
 
 
 	/**
-	 * Checks whether the given method has the given <b>name</b> and <b>parameterTypes</b>.
+	 * Checks whether the given method has the given <b>name</b> and <b>parameterTypes</b>. A parameter type of the given method may also be a superclass of a given expected
+	 * parameter type.
 	 * 
 	 * @param m              The method
 	 * @param name           The method name to compare to
 	 * @param parameterTypes The parameter types to compare to
-	 * @return <code>true</code> if the given method has the given <b>name</b> and <b>parameterTypes</b>.
+	 * @return <code>true</code> if the given method has the given <b>name</b> and <b>parameterTypes</b>
 	 */
 	public static boolean isMethod(Method m, String name, Class<?>[] parameterTypes) {
 		if(!m.getName().equals(name))
@@ -81,7 +82,7 @@ public final class ReflectionUtil {
 		if(mParameterTypes.length != parameterTypes.length)
 			return false;
 		for(int i = 0; i < mParameterTypes.length; i++){
-			if(!mParameterTypes[i].equals(parameterTypes[i]))
+			if(!mParameterTypes[i].isAssignableFrom(parameterTypes[i]))
 				return false;
 		}
 		return true;

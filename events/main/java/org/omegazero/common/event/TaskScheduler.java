@@ -137,7 +137,7 @@ public class TaskScheduler {
 	private void queue(TimerTask task) {
 		synchronized(this.queue){
 			int index = this.queue.size();
-			for(int i = 0; i < this.queue.size(); i++){
+			for(int i = this.queue.size() - 1; i >= 0; i--){
 				if(this.queue.get(i).time > task.time){
 					index = i;
 					break;

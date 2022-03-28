@@ -43,8 +43,8 @@ public final class ArrayUtil {
 	/**
 	 * Searches for the sequence of bytes given in the <b>seq</b> in the larger <b>arr</b> byte array.
 	 * 
-	 * @param arr   The array in which to search for <b>seq</b>
-	 * @param seq   The sequence of bytes to search in the larger <b>arr</b> array
+	 * @param arr The array in which to search for <b>seq</b>
+	 * @param seq The sequence of bytes to search in the larger <b>arr</b> array
 	 * @param start The position to start searching for <b>seq</b>
 	 * @return The index at which the given sequence starts in the <b>arr</b> array, or -1 if the sequence was not found
 	 * @deprecated Since 2.7, use the equivalent method {@link #indexOf(byte[], byte[], int)} instead
@@ -64,12 +64,12 @@ public final class ArrayUtil {
 	 * <code>{@link #indexOf(byte[], byte[], int) indexOf}(array, sequence, 0)</code>
 	 * </pre>
 	 * 
-	 * @param array    The array in which to search for the <b>sequence</b>
+	 * @param array The array in which to search for the <b>sequence</b>
 	 * @param sequence The sequence of bytes to search in the larger <b>array</b> array
 	 * @return The index at which the given sequence starts in the array, or {@code -1} if the sequence was not found
 	 * @since 2.7
 	 * @see #indexOf(byte[], byte[], int)
-	 * @apiNote This method has existed before version 2.7, but was called "byteArrayIndexOf"
+	 * @apiNote This method existed before version 2.7, but was called "byteArrayIndexOf"
 	 */
 	public static int indexOf(byte[] array, byte[] sequence) {
 		return indexOf(array, sequence, 0);
@@ -78,13 +78,13 @@ public final class ArrayUtil {
 	/**
 	 * Searches for the <b>sequence</b> of bytes in the larger byte <b>array</b>, starting at <b>offset</b>.
 	 * 
-	 * @param array    The array in which to search for the <b>sequence</b>
+	 * @param array The array in which to search for the <b>sequence</b>
 	 * @param sequence The sequence of bytes to search in the larger <b>array</b> array
-	 * @param offset   The index to start at
+	 * @param offset The index to start at
 	 * @return The index at which the given sequence starts in the array, or {@code -1} if the sequence was not found
 	 * @since 2.7
 	 * @see #indexOf(byte[], byte[])
-	 * @apiNote This method has existed before version 2.7, but was called "byteArrayIndexOf"
+	 * @apiNote This method existed before version 2.7, but was called "byteArrayIndexOf"
 	 */
 	public static int indexOf(byte[] array, byte[] sequence, int offset) {
 		for(int i = offset; i < array.length - sequence.length + 1; i++){
@@ -116,7 +116,7 @@ public final class ArrayUtil {
 	 * </pre>
 	 * 
 	 * @param array The array to search in
-	 * @param b     The byte value to search in the <b>array</b>
+	 * @param b The byte value to search in the <b>array</b>
 	 * @return The index of the found byte, or {@code -1} if the byte was not found
 	 * @since 2.7
 	 * @see #indexOf(byte[], byte, int, int)
@@ -130,22 +130,18 @@ public final class ArrayUtil {
 	 * <p>
 	 * If the byte is not found within the given bounds, {@code -1} is returned.
 	 * 
-	 * @param array  The array to search in
-	 * @param b      The byte value to search in the <b>array</b>
+	 * @param array The array to search in
+	 * @param b The byte value to search in the <b>array</b>
 	 * @param offset The index to start at
 	 * @param length The maximum number of bytes to search
 	 * @return The index of the found byte, or {@code -1} if the byte was not found
-	 * @throws IllegalArgumentException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
 	 * @since 2.7
 	 * @see #indexOf(byte[], byte)
 	 */
 	public static int indexOf(byte[] array, byte b, int offset, int length) {
-		if(offset < 0)
-			throw new IllegalArgumentException("offset: " + offset);
-		int end = offset + length;
-		if(end > array.length)
-			throw new IllegalArgumentException("end: " + end + " array.length: " + array.length);
-		for(int i = offset; i < end; i++){
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
 			if(array[i] == b)
 				return i;
 		}
@@ -154,8 +150,23 @@ public final class ArrayUtil {
 
 
 	/**
-	 * Reads all remaining data from the input stream (<b>is</b>) until end-of-file is reached, the VM runs out of memory or the maximum array size is reached. To limit the
-	 * amount of bytes to read, use {@link #readInputStreamToByteArray(InputStream, int)} instead.
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.7.1
+	 */
+	public static void checkBounds(byte[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+
+	/**
+	 * Reads all remaining data from the input stream (<b>is</b>) until end-of-file is reached, the VM runs out of memory or the maximum array size is reached. To limit the amount
+	 * of bytes to read, use {@link #readInputStreamToByteArray(InputStream, int)} instead.
 	 * 
 	 * @param is The input stream
 	 * @return The byte array containing all data read from the input stream
@@ -169,10 +180,10 @@ public final class ArrayUtil {
 	/**
 	 * Reads all remaining data from the input stream (<b>is</b>) until end-of-file is reached or the amount of bytes read exceeds the <b>limit</b>.
 	 * 
-	 * @param is    The input stream
+	 * @param is The input stream
 	 * @param limit The maximum amount of bytes to read before the read operation is canceled. May be 0 read any amount of bytes
 	 * @return The byte array containing all data read from the input stream
-	 * @throws IOException               If an IO error occurs
+	 * @throws IOException If an IO error occurs
 	 * @throws IndexOutOfBoundsException If the amount of bytes read exceeds <b>limit</b>
 	 * @since 2.3
 	 */

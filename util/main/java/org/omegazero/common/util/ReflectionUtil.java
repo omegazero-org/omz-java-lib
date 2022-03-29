@@ -12,7 +12,9 @@
 package org.omegazero.common.util;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * Contains utility methods for use with reflection.
@@ -39,7 +41,7 @@ public final class ReflectionUtil {
 	/**
 	 * Returns the method type signature of a method with the given <b>returnType</b> and <b>parameterTypes</b>.
 	 * 
-	 * @param returnType     The return type
+	 * @param returnType The return type
 	 * @param parameterTypes The parameter types
 	 * @return The type signature of a method with the given types
 	 */
@@ -70,8 +72,8 @@ public final class ReflectionUtil {
 	 * Checks whether the given method has the given <b>name</b> and <b>parameterTypes</b>. A parameter type of the given method may also be a superclass of a given expected
 	 * parameter type.
 	 * 
-	 * @param m              The method
-	 * @param name           The method name to compare to
+	 * @param m The method
+	 * @param name The method name to compare to
 	 * @param parameterTypes The parameter types to compare to
 	 * @return <code>true</code> if the given method has the given <b>name</b> and <b>parameterTypes</b>
 	 */
@@ -90,8 +92,8 @@ public final class ReflectionUtil {
 
 
 	/**
-	 * Returns an array containing the types of each object in the given <b>array</b>. If an element in the given array is <code>null</code>, the returned array will contain
-	 * the <code>void</code> class at its position.
+	 * Returns an array containing the types of each object in the given <b>array</b>. If an element in the given array is <code>null</code>, the returned array will contain the
+	 * <code>void</code> class at its position.
 	 * 
 	 * @param array The object array
 	 * @return The array of types
@@ -106,5 +108,61 @@ public final class ReflectionUtil {
 				types[i] = array[i].getClass();
 		}
 		return types;
+	}
+
+
+	/**
+	 * Gets the names of all {@code public static int} (possibly also {@code final}) fields starting with <b>prefix</b> of the given class.
+	 * <p>
+	 * The returned array contains all names without the <b>prefix</b>. The index of each string is the value of the integer field minus <b>lowest</b>. If an index is outside of
+	 * the created string array with the given <b>length</b>, the name is not included in the array.
+	 * <p>
+	 * If <b>readableNames</b> is {@code true}, any {@code _} characters in the field names are converted to spaces, and all characters are set to lowercase, except the first
+	 * character of each word.
+	 * 
+	 * @param cl The class
+	 * @param prefix The prefix
+	 * @param lowest The lowest integer value
+	 * @param length The length of the returned array
+	 * @param readableNames Whether to transform field names
+	 * @return The string array
+	 * @throws IllegalAccessException If a field is inaccessible
+	 * @since 2.8
+	 */
+	public static String[] getIntegerFieldNames(Class<?> cl, String prefix, int lowest, int length, boolean readableNames) throws IllegalAccessException {
+		String[] names = new String[length];
+		Field[] fields = cl.getFields();
+		final int prefixLen = prefix.length();
+		for(Field field : fields){
+			String name = field.getName();
+			if(name.startsWith(prefix) && Modifier.isPublic(field.getModifiers()) && Modifier.isStatic(field.getModifiers()) && field.getType() == int.class){
+				int index = field.getInt(null) - lowest;
+				if(index < 0 || index >= names.length)
+					continue;
+				String str;
+				if(readableNames){
+					char[] chars = new char[name.length() - prefixLen];
+					boolean u = true;
+					for(int i = prefixLen; i < name.length(); i++){
+						char c = name.charAt(i);
+						int ci = i - prefixLen;
+						if(c == '_'){
+							chars[ci] = ' ';
+							u = true;
+						}else{
+							if(!u && Character.isUpperCase(c))
+								c = Character.toLowerCase(c);
+							chars[ci] = c;
+							u = false;
+						}
+					}
+					str = new String(chars);
+				}else{
+					str = name.substring(prefixLen);
+				}
+				names[index] = str;
+			}
+		}
+		return names;
 	}
 }

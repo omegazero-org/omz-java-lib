@@ -29,22 +29,40 @@ public class ConfigObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 
+	/**
+	 * The data.
+	 */
 	protected final Map<String, Object> data;
 
+	/**
+	 * Creates an empty {@code ConfigObject}.
+	 */
 	public ConfigObject() {
-		this(new HashMap<>());
+		this(new HashMap<>(), false);
 	}
 
+	/**
+	 * Creates a {@code ConfigObject} with the given data.
+	 * <p>
+	 * Changes on the given map have no effects on this {@code ConfigObject}.
+	 * 
+	 * @param data The data
+	 */
 	public ConfigObject(Map<String, Object> data) {
+		this(data, true);
+	}
+
+	private ConfigObject(Map<String, Object> data, boolean copy) {
 		if(data == null)
 			throw new NullPointerException("data is null");
-		this.data = data;
+		this.data = copy ? new HashMap<>(data) : data;
 	}
 
 
 	/**
+	 * Returns the number of key-value pairs in this {@code ConfigObject}.
 	 * 
-	 * @return The number of key-value pairs in this <code>ConfigObject</code>
+	 * @return The number of key-value pairs
 	 * @see Map#size()
 	 */
 	public int size() {
@@ -52,8 +70,9 @@ public class ConfigObject implements Serializable {
 	}
 
 	/**
+	 * Returns {@code true} if this {@code ConfigObject} contains no key-value pairs.
 	 * 
-	 * @return <code>true</code> if this <code>ConfigObject</code> contains no key-value pairs
+	 * @return {@code true} if empty
 	 * @see Map#isEmpty()
 	 */
 	public boolean isEmpty() {
@@ -61,9 +80,10 @@ public class ConfigObject implements Serializable {
 	}
 
 	/**
+	 * Returns whether the given <b>key</b> exists in this {@code ConfigObject}.
 	 * 
-	 * @param value The key to search for
-	 * @return <code>true</code> if this <code>ConfigObject</code> contains the given <b>key</b>
+	 * @param key The key to search for
+	 * @return {@code true} if the <b>key</b> exists
 	 * @see Map#containsKey(Object)
 	 */
 	public boolean containsKey(Object key) {
@@ -71,9 +91,10 @@ public class ConfigObject implements Serializable {
 	}
 
 	/**
+	 * Returns whether the given <b>value</b> exists in this {@code ConfigObject}.
 	 * 
 	 * @param value The value to search for
-	 * @return <code>true</code> if this <code>ConfigObject</code> contains the given <b>value</b>
+	 * @return {@code true} if the <b>value</b> exists
 	 * @see Map#containsValue(Object)
 	 */
 	public boolean containsValue(Object value) {
@@ -81,24 +102,27 @@ public class ConfigObject implements Serializable {
 	}
 
 	/**
+	 * Returns an unmodifiable set of all keys of this {@code ConfigObject}.
 	 * 
-	 * @return An unmodifiable set of all keys of this <code>ConfigObject</code>
+	 * @return A set of all keys
 	 */
 	public Set<String> keySet() {
 		return Collections.unmodifiableSet(this.data.keySet());
 	}
 
 	/**
+	 * Returns an unmodifiable collection of all values of this {@code ConfigObject}.
 	 * 
-	 * @return An unmodifiable collection of all values of this <code>ConfigObject</code>
+	 * @return A collection of all values
 	 */
 	public Collection<Object> values() {
 		return Collections.unmodifiableCollection(this.data.values());
 	}
 
 	/**
+	 * Returns an unmodifiable set of all entries in this {@code ConfigObject}.
 	 * 
-	 * @return An unmodifiable set of all entries in this <code>ConfigObject</code>
+	 * @return A set of entries
 	 */
 	public Set<Map.Entry<String, Object>> entrySet() {
 		return Collections.unmodifiableSet(this.data.entrySet());
@@ -115,8 +139,8 @@ public class ConfigObject implements Serializable {
 
 
 	/**
-	 * Creates a new <code>ConfigObject</code> that contains all properties of this and the given <code>ConfigObject</code>. If both have a property with the same key, the
-	 * value of the property in the given <code>ConfigObject</code> is put into the new <code>ConfigObject</code>.<br>
+	 * Creates a new <code>ConfigObject</code> that contains all properties of this and the given <code>ConfigObject</code>. If both have a property with the same key, the value of
+	 * the property in the given <code>ConfigObject</code> is put into the new <code>ConfigObject</code>.<br>
 	 * Both provided objects stay unchanged.
 	 * 
 	 * @param other The <code>ConfigObject</code> to merge this one with, possibly overriding values of this <code>ConfigObject</code>
@@ -126,18 +150,18 @@ public class ConfigObject implements Serializable {
 		Map<String, Object> newData = new HashMap<>(this.data.size() + other.data.size());
 		newData.putAll(this.data);
 		newData.putAll(other.data);
-		return new ConfigObject(newData);
+		return new ConfigObject(newData, false);
 	}
 
 
 	/**
-	 * Returns a value associated with the given <b>key</b> in this <code>ConfigObject</code>, or <code>null</code> if the given key has no value set. Note that a return value
-	 * of <code>null</code> may also indicate that the given key is explicitly mapped to <code>null</code>.<br>
-	 * <br>
-	 * This method can be used to get a value of any type. To eliminate the need for type checking in the caller code, any of the <code>get*</code> and <code>opt*</code>
-	 * methods may be used instead. The name and return value of those methods indicates the type that is checked for. Corresponding methods in both groups are equivalent,
-	 * except that the methods starting with <code>get</code> throw an <code>IllegalArgumentException</code> if the value does not exist or is not the expected type, while the
-	 * methods starting with <code>opt</code> return <code>null</code> or the value passed to the <b>def</b> argument instead.
+	 * Returns a value associated with the given <b>key</b> in this <code>ConfigObject</code>, or <code>null</code> if the given key has no value set. Note that a return value of
+	 * <code>null</code> may also indicate that the given key is explicitly mapped to <code>null</code>.
+	 * <p>
+	 * This method can be used to get a value of any type. To eliminate the need for type checking in the caller code, any of the <code>get*</code> and <code>opt*</code> methods
+	 * may be used instead. The name and return value of those methods indicates the type that is checked for. Corresponding methods in both groups are equivalent, except that the
+	 * methods starting with <code>get</code> throw an <code>IllegalArgumentException</code> if the value does not exist or is not the expected type, while the methods starting
+	 * with <code>opt</code> return <code>null</code> or the value passed to the <b>def</b> argument instead.
 	 * 
 	 * @param key The key
 	 * @return The value mapped to the given <b>key</b> or <code>null</code> if no such value exists
@@ -147,6 +171,13 @@ public class ConfigObject implements Serializable {
 	}
 
 
+	/**
+	 * Returns a {@code ConfigObject} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code ConfigObject}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code ConfigObject}
+	 */
 	public ConfigObject getObject(String key) {
 		Object v = this.get(key);
 		if(v instanceof ConfigObject)
@@ -155,6 +186,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected object for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code ConfigArray} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code ConfigArray}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code ConfigArray}
+	 */
 	public ConfigArray getArray(String key) {
 		Object v = this.get(key);
 		if(v instanceof ConfigArray)
@@ -163,6 +201,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected array for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code String} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code String}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code String}
+	 */
 	public String getString(String key) {
 		Object v = this.get(key);
 		if(v instanceof String)
@@ -171,6 +216,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected string for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns an {@code int} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code int}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not an {@code int}
+	 */
 	public int getInt(String key) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -179,6 +231,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected integer for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code long} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code long}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code long}
+	 */
 	public long getLong(String key) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -187,6 +246,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected integer for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code float} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code float}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code float}
+	 */
 	public float getFloat(String key) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -195,6 +261,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected floating point value for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code double} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code double}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code double}
+	 */
 	public double getDouble(String key) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -203,6 +276,13 @@ public class ConfigObject implements Serializable {
 			throw new IllegalArgumentException("Expected floating point value for '" + key + "' but received type " + getTypeName(v));
 	}
 
+	/**
+	 * Returns a {@code boolean} associated with the given <b>key</b> in this {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code boolean}
+	 * @throws IllegalArgumentException If no mapping with the given key exists or is not a {@code boolean}
+	 */
 	public boolean getBoolean(String key) {
 		Object v = this.get(key);
 		if(v instanceof Boolean)
@@ -212,6 +292,13 @@ public class ConfigObject implements Serializable {
 	}
 
 
+	/**
+	 * Returns a {@code ConfigObject} associated with the given <b>key</b> in this {@code ConfigObject}, or {@code null} if no mapping the the given <b>key</b> exists or is not a
+	 * {@code ConfigObject}.
+	 * 
+	 * @param key The key
+	 * @return The {@code ConfigObject}, or {@code null} if it does not exist
+	 */
 	public ConfigObject optObject(String key) {
 		Object v = this.get(key);
 		if(v instanceof ConfigObject)
@@ -220,6 +307,13 @@ public class ConfigObject implements Serializable {
 			return null;
 	}
 
+	/**
+	 * Returns a {@code ConfigArray} associated with the given <b>key</b> in this {@code ConfigObject}, or {@code null} if no mapping the the given <b>key</b> exists or is not a
+	 * {@code ConfigArray}.
+	 * 
+	 * @param key The key
+	 * @return The {@code ConfigArray}, or {@code null} if it does not exist
+	 */
 	public ConfigArray optArray(String key) {
 		Object v = this.get(key);
 		if(v instanceof ConfigArray)
@@ -228,6 +322,14 @@ public class ConfigObject implements Serializable {
 			return null;
 	}
 
+	/**
+	 * Returns a {@code String} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not a
+	 * {@code String}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code String}
+	 */
 	public String optString(String key, String def) {
 		Object v = this.get(key);
 		if(v instanceof String)
@@ -236,6 +338,14 @@ public class ConfigObject implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns an {@code int} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not an
+	 * {@code int}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code int}
+	 */
 	public int optInt(String key, int def) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -244,6 +354,14 @@ public class ConfigObject implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns a {@code long} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not a
+	 * {@code long}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code long}
+	 */
 	public long optLong(String key, long def) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -252,6 +370,14 @@ public class ConfigObject implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns a {@code float} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not a
+	 * {@code float}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code float}
+	 */
 	public float optFloat(String key, float def) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -260,6 +386,14 @@ public class ConfigObject implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns a {@code double} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not a
+	 * {@code double}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code double}
+	 */
 	public double optDouble(String key, double def) {
 		Object v = this.get(key);
 		if(v instanceof Number)
@@ -268,6 +402,14 @@ public class ConfigObject implements Serializable {
 			return def;
 	}
 
+	/**
+	 * Returns a {@code boolean} associated with the given <b>key</b> in this {@code ConfigObject}, or <b>def</b> if no mapping the the given <b>key</b> exists or is not a
+	 * {@code boolean}.
+	 * 
+	 * @param key The key
+	 * @param def The default value
+	 * @return The {@code boolean}
+	 */
 	public boolean optBoolean(String key, boolean def) {
 		Object v = this.get(key);
 		if(v instanceof Boolean)
@@ -277,6 +419,13 @@ public class ConfigObject implements Serializable {
 	}
 
 
+	/**
+	 * Determines whether the given object is equal to this {@code ConfigObject}.
+	 * <p>
+	 * Another object is equal if it is also a {@code ConfigObject} and contains the same mappings.
+	 * 
+	 * @see Map#equals(Object)
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(o == null || !(o instanceof ConfigObject))
@@ -284,11 +433,27 @@ public class ConfigObject implements Serializable {
 		return ((ConfigObject) o).data.equals(this.data);
 	}
 
+	/**
+	 * Returns a hash code for this {@code ConfigObject}.
+	 * 
+	 * @see Map#hashCode()
+	 */
 	@Override
-	public ConfigObject clone() {
-		return new ConfigObject(this.copyData());
+	public int hashCode() {
+		return this.data.hashCode();
 	}
 
+	/**
+	 * Returns a clone of this {@code ConfigObject}, which contains the same elements as this {@code ConfigObject}.
+	 */
+	@Override
+	public ConfigObject clone() {
+		return new ConfigObject(this.data, true);
+	}
+
+	/**
+	 * Returns a string representation of this {@code ConfigObject}.
+	 */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

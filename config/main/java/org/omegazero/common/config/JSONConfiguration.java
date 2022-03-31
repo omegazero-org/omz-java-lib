@@ -21,28 +21,34 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * {@link Configuration} implementation based on JSON.<br>
- * <br>
- * This class requires the org.json library, which can be obtained here: <a href="https://github.com/stleary/JSON-java">https://github.com/stleary/JSON-java</a>.
+ * A {@link Configuration} implementation based on JSON.
+ * <p>
+ * This class requires the {@code org.json} library, which can be obtained here: <a href="https://github.com/stleary/JSON-java">https://github.com/stleary/JSON-java</a>.
  */
 public class JSONConfiguration implements Configuration {
+
 
 	private final JSONObject json;
 
 	/**
+	 * Creates a new {@code JSONConfiguration}.
 	 * 
-	 * @param fileData A byte array representing a JSON object. This data is parsed directly in the constructor
+	 * @param fileData A byte array representing a JSON object
+	 * @throws JSONException If the given data is not valid JSON
 	 */
 	public JSONConfiguration(byte[] fileData) {
 		this(new String(fileData));
 	}
 
 	/**
+	 * Creates a new {@code JSONConfiguration}.
 	 * 
-	 * @param fileData A string representing a JSON object. This data is parsed directly in the constructor
+	 * @param fileData A string representing a JSON object
+	 * @throws JSONException If the given data is not valid JSON
 	 */
 	public JSONConfiguration(String fileData) {
 		this.json = new JSONObject(fileData);
@@ -91,7 +97,7 @@ public class JSONConfiguration implements Configuration {
 	/**
 	 * Method that is called when a field with an unsupported type is encountered.
 	 * 
-	 * @param field      The field to be set
+	 * @param field The field to be set
 	 * @param jsonObject The object returned by the JSON library for the key of the field
 	 * @return <code>true</code> if population was successful, <code>false</code> otherwise
 	 * @see JSONConfiguration#load()
@@ -102,14 +108,14 @@ public class JSONConfiguration implements Configuration {
 
 
 	/**
-	 * {@inheritDoc}<br>
-	 * <br>
-	 * The JSON file that was parsed in the constructor is read and fields that have the {@link ConfigurationOption} annotation will be populated if the JSON file contains a
-	 * key with the same name as the field. Additional keys in the JSON file that have no corresponding field are ignored.<br>
-	 * If the value of a key is a different type than the field type, an <code>IllegalArgumentException</code> is thrown.<br>
-	 * <br>
-	 * Supported field types are <code>ConfigObject</code>, <code>ConfigArray</code>, <code>String</code>, any primitive type and {@link List}s of the mentioned types. If the
-	 * field type is not supported, the overridable method {@link JSONConfiguration#setUnsupportedField(Field, Object)} is called. If this method is not implemented or returns
+	 * {@inheritDoc}
+	 * <p>
+	 * The JSON file that was parsed in the constructor is read and fields that have the {@link ConfigurationOption} annotation will be populated if the JSON file contains a key
+	 * with the same name as the field. Additional keys in the JSON file that have no corresponding field are ignored.<br>
+	 * If the value of a key is a different type than the field type, an <code>IllegalArgumentException</code> is thrown.
+	 * <p>
+	 * Supported field types are <code>ConfigObject</code>, <code>ConfigArray</code>, <code>String</code>, any primitive type and {@link List}s of the mentioned types. If the field
+	 * type is not supported, the overridable method {@link JSONConfiguration#setUnsupportedField(Field, Object)} is called. If this method is not implemented or returns
 	 * <code>false</code> (the default behavior), an <code>UnsupportedOperationException</code> is thrown.
 	 */
 	@Override

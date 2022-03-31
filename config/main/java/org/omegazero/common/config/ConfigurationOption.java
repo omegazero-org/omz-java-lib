@@ -16,6 +16,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * An annotation required on fields populated by {@link Configuration} implementations.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = { ElementType.FIELD })
 public @interface ConfigurationOption {

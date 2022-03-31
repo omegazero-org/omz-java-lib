@@ -13,12 +13,20 @@ package org.omegazero.common.config;
 
 import java.io.IOException;
 
+/**
+ * An interface for managing configuration files or similar.
+ * <p>
+ * Classes that implement this method usually support a single configuration format. Application classes then extend from those classes and declare several fields with the
+ * {@link ConfigurationOption} annotation, which will be populated by a call to {@link #load()}, with values from the configuration source.
+ */
 public interface Configuration {
 
 	/**
 	 * Loads this configuration.
+	 * <p>
+	 * All fields with the {@link ConfigurationOption} annotation will be populated with values from the configuration source.
 	 * 
-	 * @throws IOException
+	 * @throws IOException If an IO error occurs
 	 */
 	public void load() throws IOException;
 }

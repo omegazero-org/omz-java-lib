@@ -27,20 +27,44 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 	private static final long serialVersionUID = 1L;
 
 
+	/**
+	 * The data.
+	 */
 	protected final List<Object> data;
 
+	/**
+	 * Creates an empty {@code ConfigArray}.
+	 */
 	public ConfigArray() {
-		this(new ArrayList<>());
+		this(null, false);
 	}
 
+	/**
+	 * Creates a {@code ConfigArray}.
+	 * 
+	 * @param initialCapacity The number of elements
+	 */
+	@Deprecated
 	public ConfigArray(int initialCapacity) {
-		this(new ArrayList<>(initialCapacity));
+		this.data = new ArrayList<>(initialCapacity);
 	}
 
+	/**
+	 * Creates a {@code ConfigArray} with the given elements.
+	 * <p>
+	 * Changes on the given list have no effects on this {@code ConfigArray}.
+	 * 
+	 * @param data The data
+	 */
 	public ConfigArray(List<Object> data) {
+		this(data, true);
+	}
+
+	private ConfigArray(List<Object> data, boolean copy) {
 		if(data == null)
-			throw new NullPointerException("data is null");
-		this.data = data;
+			this.data = java.util.Collections.emptyList();
+		else
+			this.data = copy ? new ArrayList<>(data) : data;
 	}
 
 
@@ -66,38 +90,91 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 		List<Object> newData = new ArrayList<>(this.data.size() + other.data.size());
 		newData.addAll(this.data);
 		newData.addAll(other.data);
-		return new ConfigArray(newData);
+		return new ConfigArray(newData, false);
 	}
 
 
+	/**
+	 * Returns the number of elements in this {@code ConfigArray}.
+	 * 
+	 * @return The number of elements
+	 * @see List#size()
+	 */
 	public int size() {
 		return this.data.size();
 	}
 
+	/**
+	 * Returns whether this {@code ConfigArray} is empty.
+	 * 
+	 * @return {@code true} if empty
+	 * @see List#isEmpty()
+	 */
 	public boolean isEmpty() {
 		return this.data.isEmpty();
 	}
 
+	/**
+	 * Returns whether the given element <b>o</b> is in this {@code ConfigArray}.
+	 * 
+	 * @param o The element to search
+	 * @return {@code true} if <b>o</b> exists
+	 * @see List#contains(Object)
+	 */
 	public boolean contains(Object o) {
 		return this.data.contains(o);
 	}
 
+	/**
+	 * Converts this {@code ConfigArray} to an {@code Object} array.
+	 * 
+	 * @return The array containing all elements
+	 * @see List#toArray()
+	 */
 	public Object[] toArray() {
 		return this.data.toArray();
 	}
 
+	/**
+	 * Returns whether all elements in the given {@link Collection} are contained in this {@code ConfigArray}.
+	 * 
+	 * @param c The collection
+	 * @return {@code true} if all elements of the collection exist
+	 * @see List#containsAll(Collection)
+	 */
 	public boolean containsAll(Collection<?> c) {
 		return this.data.containsAll(c);
 	}
 
+	/**
+	 * Returns the element at the given position in this {@code ConfigArray}.
+	 * 
+	 * @param index The index
+	 * @return The element at the index
+	 * @see List#get(int)
+	 */
 	public Object get(int index) {
 		return this.data.get(index);
 	}
 
+	/**
+	 * Returns the index of the given element.
+	 * 
+	 * @param o The element to search
+	 * @return The index of the element, or {@code -1} if the element does not exist
+	 * @see List#indexOf(Object)
+	 */
 	public int indexOf(Object o) {
 		return this.data.indexOf(o);
 	}
 
+	/**
+	 * Returns the last index of the given element.
+	 * 
+	 * @param o The element to search
+	 * @return The last index of the element, or {@code -1} if the element does not exist
+	 * @see List#lastIndexOf(Object)
+	 */
 	public int lastIndexOf(Object o) {
 		return this.data.lastIndexOf(o);
 	}
@@ -122,6 +199,13 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 	}
 
 
+	/**
+	 * Determines whether the given object is equal to this {@code ConfigArray}.
+	 * <p>
+	 * Another object is equal if it is also a {@code ConfigArray} and contains the same elements.
+	 * 
+	 * @see List#equals(Object)
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(o == null || !(o instanceof ConfigArray))
@@ -129,11 +213,29 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 		return ((ConfigArray) o).data.equals(this.data);
 	}
 
+	/**
+	 * Returns a hash code for this {@code ConfigArray}.
+	 * 
+	 * @see List#hashCode()
+	 */
 	@Override
-	public ConfigArray clone() {
-		return new ConfigArray(this.copyData());
+	public int hashCode() {
+		return this.data.hashCode();
 	}
 
+	/**
+	 * Returns a clone of this {@code ConfigArray}, which contains the same elements as this {@code ConfigArray}.
+	 */
+	@Override
+	public ConfigArray clone() {
+		return new ConfigArray(this.data, true);
+	}
+
+	/**
+	 * Returns a string representation of this {@code ConfigArray}.
+	 * 
+	 * @see List#toString()
+	 */
 	@Override
 	public String toString() {
 		return this.data.toString();

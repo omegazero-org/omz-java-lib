@@ -14,6 +14,7 @@ package org.omegazero.common.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * Utility functions for arrays.
@@ -105,9 +106,7 @@ public final class ArrayUtil {
 
 
 	/**
-	 * Searches the given byte <b>b</b> in the given <b>array</b>.
-	 * <p>
-	 * If the byte is not found within the array, {@code -1} is returned.
+	 * Searches the given {@code byte} <b>b</b> in the given <b>array</b>.
 	 * <p>
 	 * A call to this method is equivalent to a call to
 	 * 
@@ -116,25 +115,24 @@ public final class ArrayUtil {
 	 * </pre>
 	 * 
 	 * @param array The array to search in
-	 * @param b The byte value to search in the <b>array</b>
-	 * @return The index of the found byte, or {@code -1} if the byte was not found
+	 * @param b The {@code byte} value to search in the <b>array</b>
+	 * @return The index of the found {@code byte}, or {@code -1} if it was not found
 	 * @since 2.7
-	 * @see #indexOf(byte[], byte, int, int)
 	 */
 	public static int indexOf(byte[] array, byte b) {
 		return indexOf(array, b, 0, array.length);
 	}
 
 	/**
-	 * Searches the given byte <b>b</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> bytes.
+	 * Searches the given {@code byte} <b>b</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
 	 * <p>
-	 * If the byte is not found within the given bounds, {@code -1} is returned.
+	 * If the {@code byte} is not found within the given bounds, {@code -1} is returned.
 	 * 
 	 * @param array The array to search in
-	 * @param b The byte value to search in the <b>array</b>
+	 * @param b The {@code byte} value to search in the <b>array</b>
 	 * @param offset The index to start at
-	 * @param length The maximum number of bytes to search
-	 * @return The index of the found byte, or {@code -1} if the byte was not found
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code byte}, or {@code -1} if it was not found
 	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
 	 * @since 2.7
 	 * @see #indexOf(byte[], byte)
@@ -148,17 +146,418 @@ public final class ArrayUtil {
 		return -1;
 	}
 
+	/**
+	 * Searches the given {@code char} <b>c</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(char[], char, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param c The {@code char} value to search in the <b>array</b>
+	 * @return The index of the found {@code char}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(char[] array, char c) {
+		return indexOf(array, c, 0, array.length);
+	}
 
 	/**
-	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>
+	 * Searches the given {@code char} <b>c</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code char} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param c The {@code char} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code char}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(char[], char)
+	 */
+	public static int indexOf(char[] array, char c, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(array[i] == c)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given {@code short} <b>s</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(short[], short, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param s The {@code short} value to search in the <b>array</b>
+	 * @return The index of the found {@code short}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(short[] array, short s) {
+		return indexOf(array, s, 0, array.length);
+	}
+
+	/**
+	 * Searches the given {@code short} <b>s</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code short} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param s The {@code short} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code short}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(short[], short)
+	 */
+	public static int indexOf(short[] array, short s, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(array[i] == s)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given {@code int} <b>i</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(int[], int, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param i The {@code int} value to search in the <b>array</b>
+	 * @return The index of the found {@code int}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(int[] array, int i) {
+		return indexOf(array, i, 0, array.length);
+	}
+
+	/**
+	 * Searches the given {@code int} <b>i</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code int} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param i The {@code int} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code int}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(int[], int)
+	 */
+	public static int indexOf(int[] array, int i, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i2 = offset; i2 < offset + length; i2++){
+			if(array[i2] == i)
+				return i2;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given {@code long} <b>l</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(long[], long, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param l The {@code long} value to search in the <b>array</b>
+	 * @return The index of the found {@code long}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(long[] array, long l) {
+		return indexOf(array, l, 0, array.length);
+	}
+
+	/**
+	 * Searches the given {@code long} <b>l</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code long} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param l The {@code long} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code long}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(long[], long)
+	 */
+	public static int indexOf(long[] array, long l, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(array[i] == l)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given {@code float} <b>f</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(float[], float, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param f The {@code float} value to search in the <b>array</b>
+	 * @return The index of the found {@code float}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(float[] array, float f) {
+		return indexOf(array, f, 0, array.length);
+	}
+
+	/**
+	 * Searches the given {@code float} <b>f</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code float} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param f The {@code float} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code float}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(float[], float)
+	 */
+	public static int indexOf(float[] array, float f, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(array[i] == f)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given {@code double} <b>d</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(double[], double, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param array The array to search in
+	 * @param d The {@code double} value to search in the <b>array</b>
+	 * @return The index of the found {@code double}, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static int indexOf(double[] array, double d) {
+		return indexOf(array, d, 0, array.length);
+	}
+
+	/**
+	 * Searches the given {@code double} <b>d</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * If the {@code double} is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param array The array to search in
+	 * @param d The {@code double} value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found {@code double}, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(double[], double)
+	 */
+	public static int indexOf(double[] array, double d, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(array[i] == d)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Searches the given element <b>e</b> in the given <b>array</b>.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * 
+	 * <pre>
+	 * <code>{@link #indexOf(T[], T, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * </pre>
+	 * 
+	 * @param <T> The element type
+	 * @param array The array to search in
+	 * @param e The value to search in the <b>array</b>
+	 * @return The index of the found element, or {@code -1} if it was not found
+	 * @since 2.8
+	 */
+	public static <T> int indexOf(T[] array, T e) {
+		return indexOf(array, e, 0, array.length);
+	}
+
+	/**
+	 * Searches the given element <b>e</b> in the given <b>array</b>, starting at <b>offset</b> and continuing for a maximum of <b>length</b> elements.
+	 * <p>
+	 * Equality is determined using {@link Objects#equals(Object, Object)}. If the element is not found within the given bounds, {@code -1} is returned.
+	 * 
+	 * @param <T> The element type
+	 * @param array The array to search in
+	 * @param e The value to search in the <b>array</b>
+	 * @param offset The index to start at
+	 * @param length The maximum number of elements to search
+	 * @return The index of the found element, or {@code -1} if it was not found
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
+	 * @since 2.8
+	 * @see #indexOf(T[], T)
+	 */
+	public static <T> int indexOf(T[] array, T e, int offset, int length) {
+		checkBounds(array, offset, length);
+		for(int i = offset; i < offset + length; i++){
+			if(Objects.equals(array[i], e))
+				return i;
+		}
+		return -1;
+	}
+
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
 	 * 
 	 * @param array The array
 	 * @param offset The start index
 	 * @param length The number of required valid indices starting at <b>offset</b>
 	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
-	 * @since 2.7.1
+	 * @since 2.8
+	 */
+	public static void checkBounds(boolean[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
 	 */
 	public static void checkBounds(byte[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(char[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(short[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(int[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(long[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(float[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static void checkBounds(double[] array, int offset, int length) {
+		if(offset < 0 || offset + length > array.length)
+			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
+	}
+
+	/**
+	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
+	 * 
+	 * @param array The array
+	 * @param offset The start index
+	 * @param length The number of required valid indices starting at <b>offset</b>
+	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index exceeds the length of the array
+	 * @since 2.8
+	 */
+	public static <T> void checkBounds(T[] array, int offset, int length) {
 		if(offset < 0 || offset + length > array.length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}

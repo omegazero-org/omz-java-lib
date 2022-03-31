@@ -22,6 +22,11 @@ import java.util.List;
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
 
+/**
+ * Manages and loads {@link Plugin}s.
+ * 
+ * @since 2.2
+ */
 public class PluginManager implements Iterable<Plugin> {
 
 	private static final Logger logger = LoggerUtil.createLogger();
@@ -32,20 +37,26 @@ public class PluginManager implements Iterable<Plugin> {
 	public static final int ALLOW_DIRS = 8;
 
 
+	private final Plugin.PluginClassLoader classLoader = new Plugin.PluginClassLoader();
 	private final List<Plugin> plugins = new ArrayList<>();
 
 
 	/**
-	 * @see PluginManager#loadFromDirectory(Path, int)
+	 * Loads plugins from the given directory. See {@link #loadFromDirectory(Path, int)}.
+	 * 
+	 * @param path The directory to load plugins from
+	 * @param flags Bit field of flags
+	 * @return The number of plugins loaded
+	 * @throws IOException If an IO error occurs
 	 */
 	public int loadFromDirectory(String path, int flags) throws IOException {
 		return this.loadFromDirectory(Paths.get(path), flags);
 	}
 
 	/**
-	 * Searches for plugins in the given directory and loads them using {@link PluginManager#loadPlugin(Path)}.<br>
-	 * <br>
-	 * The search behavior may be configured using the <b>flags</b> parameter. This parameter is a bit field of @{@link PluginManager#EXIT_ON_ERROR},
+	 * Searches for plugins in the given directory and loads them using {@link PluginManager#loadPlugin(Path)}.
+	 * <p>
+	 * The search behavior may be configured using the <b>flags</b> parameter. This parameter is a bit field of {@link PluginManager#EXIT_ON_ERROR},
 	 * {@link PluginManager#ALLOW_NONJAR}, {@link PluginManager#RECURSIVE} or {@link PluginManager#ALLOW_DIRS}. The flags have the following behavior:
 	 * <ul>
 	 * <li><code>EXIT_ON_ERROR</code> - Exit this function when an error occurs while loading a plugin, rethrowing the caught exception</li>
@@ -56,7 +67,7 @@ public class PluginManager implements Iterable<Plugin> {
 	 * </ul>
 	 * <code>RECURSIVE</code> and <code>ALLOW_DIRS</code> are mutually exclusive. If both are specified, the function behaves as if only <code>RECURSIVE</code> were set.
 	 * 
-	 * @param path  The directory to load plugins from
+	 * @param path The directory to load plugins from
 	 * @param flags Bit field of flags
 	 * @return The number of plugins loaded
 	 * @throws IOException If an IO error occurs
@@ -97,7 +108,7 @@ public class PluginManager implements Iterable<Plugin> {
 	 * @throws IOException If an IO error occurs
 	 */
 	public void loadPlugin(Path path) throws IOException {
-		Plugin p = new Plugin(path);
+		Plugin p = new Plugin(path, this.classLoader);
 		p.init();
 		for(Plugin e : this.plugins){
 			if(e.getId().equals(p.getId()))
@@ -107,8 +118,9 @@ public class PluginManager implements Iterable<Plugin> {
 	}
 
 	/**
+	 * Returns the number of plugins registered in this <code>PluginManager</code>.
 	 * 
-	 * @return The number of plugins registered in this <code>PluginManager</code>
+	 * @return The number of plugins
 	 */
 	public int pluginCount() {
 		return this.plugins.size();

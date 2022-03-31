@@ -25,14 +25,32 @@ import java.util.Map;
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
 
+/**
+ * Represents a plugin managed by a {@link PluginManager}.
+ * <p>
+ * Plugins are JAR files or directories containing class files. A plugin must have a file called {@code plugin.cfg} in its root directory, containing metadata about the plugin.
+ * <p>
+ * The metadata file is a list of key-value pairs. Each pair is separated by one or more newline characters. The key must consist only of alphanumeric characters, followed by a
+ * {@code =}, and the value, which has different character restrictions depending on the key. The following keys are defined:
+ * <table>
+ * <tr><th>key</th><th>Meaning</th><th>Required</th><th>Allowed characters</th></tr>
+ * <tr><td>id</td><td>The unique ID of the plugin</td><td>yes</td><td>alphanumeric, {@code -}, {@code _}</td></tr>
+ * <tr><td>name</td><td>The name of the plugin</td><td>no</td><td>alphanumeric, various special characters</td></tr>
+ * <tr><td>version</td><td>A version string</td><td>no</td><td>alphanumeric, {@code -}, {@code _}, {@code .}, {@code +}</td></tr>
+ * <tr><td>description</td><td>A description</td><td>no</td><td>any</td></tr>
+ * <tr><td>mainClass</td><td>The main class of the plugin</td><td>yes</td><td>Java identifier characters</td></tr>
+ * </table>
+ * Other keys not listed in this table are stored and may be retrieved using {@link #getAdditionalOption(String)}.
+ * 
+ * @since 2.2
+ */
 public class Plugin {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
 	private static final String META_FILE_NAME = "plugin.cfg";
 
-	private static PluginClassLoader classLoader = new PluginClassLoader();
-
+	private final PluginClassLoader classLoader;
 	private final File pathFile;
 
 	private final String path;
@@ -50,31 +68,30 @@ public class Plugin {
 	private Class<?> mainClassType;
 	private Object mainClassInstance;
 
-	public Plugin(String path) {
-		this(new File(path));
+	public Plugin(Path path, PluginClassLoader classLoader) {
+		this(path.toFile(), classLoader);
 	}
 
-	public Plugin(Path path) {
-		this(path.toFile());
-	}
-
-	public Plugin(File file) {
+	public Plugin(File file, PluginClassLoader classLoader) {
 		this.pathFile = file;
+		this.classLoader = classLoader;
 		this.path = this.pathFile.getAbsolutePath();
 		this.directoryPlugin = Files.isDirectory(Paths.get(this.path));
 	}
 
 
+	/**
+	 * Loads the metadata file and main class of this {@code Plugin}.
+	 */
 	public void init() {
 		if(this.init)
 			return;
 		this.init = true;
 		try{
-			//this.classLoader = new URLClassLoader(new URL[] { this.pathFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
-			Plugin.classLoader.addURL(this.pathFile.toURI().toURL());
+			this.classLoader.addURL(this.pathFile.toURI().toURL());
 			this.loadMetaFile();
-			logger.debug(this.getName(), ": Loading main class ", this.mainClass);
-			this.mainClassType = Class.forName(this.mainClass, true, Plugin.classLoader);
+			logger.debug("Loading main class of '", this.getName(), "': ", this.mainClass);
+			this.mainClassType = Class.forName(this.mainClass, true, this.classLoader);
 			this.mainClassInstance = this.mainClassType.newInstance();
 		}catch(IOException | ReflectiveOperationException e){
 			throw new RuntimeException("Error while loading plugin at '" + this.path + "'", e);
@@ -128,11 +145,12 @@ public class Plugin {
 				this.validateValue(key, value, "[a-zA-Z0-9\\. \\-_\\+\\(\\)$]+");
 				this.name = value;
 			}else if(key.equals("version")){
-				this.validateValue(key, value, "[a-zA-Z0-9\\.\\-_]+");
+				this.validateValue(key, value, "[a-zA-Z0-9\\.\\-_\\+]+");
 				this.version = value;
 			}else if(key.equals("description")){
 				this.description = value;
 			}else if(key.equals("mainClass")){
+				this.validateValue(key, value, "[a-zA-Z0-9\\._$]+");
 				this.mainClass = value;
 			}else{
 				this.additionalOptions.put(key, value);
@@ -154,8 +172,8 @@ public class Plugin {
 
 
 	/**
-	 * The plugin ID is a string given in the plugin metadata file consisting only of upper- or lowercase letters and numbers.<br>
-	 * <br>
+	 * The plugin ID is a string given in the plugin metadata file consisting only of upper- or lowercase letters and numbers.
+	 * <p>
 	 * If a {@link PluginManager} is used to load multiple plugins, it will ensure that an ID is unique among all plugins.
 	 * 
 	 * @return The unique ID of this plugin
@@ -165,8 +183,7 @@ public class Plugin {
 	}
 
 	/**
-	 * Returns the name of this plugin. If no name was set in the metadata file or {@link #init()} was not called, a name will be inferred from the path given in the
-	 * constructor.
+	 * Returns the name of this plugin. If no name was set in the metadata file or {@link #init()} was not called, a name will be inferred from the path given in the constructor.
 	 * 
 	 * @return The name of this plugin
 	 */
@@ -175,31 +192,55 @@ public class Plugin {
 	}
 
 	/**
+	 * Returns the version string set in the metadata file or <code>null</code> if none was set.
 	 * 
-	 * @return The version string set in the metadata file or <code>null</code> if none was set
+	 * @return The version string
 	 */
 	public String getVersion() {
 		return this.version;
 	}
 
 	/**
+	 * Returns a description provided in the metadata file or <code>null</code> if none was provided.
 	 * 
-	 * @return A description provided in the metadata file or <code>null</code> if none was provided
+	 * @return The description
 	 */
 	public String getDescription() {
 		return this.description;
 	}
 
+	/**
+	 * Returns the value of an unrecognized option in the metadata file.
+	 * 
+	 * @param key The key
+	 * @return The value
+	 */
 	public String getAdditionalOption(String key) {
 		return this.additionalOptions.get(key);
 	}
 
 
+	/**
+	 * Returns the type of the main class of this {@code Plugin}, loaded by the class loader passed in the constructor.
+	 * 
+	 * @return The type
+	 * @throws IllegalStateException If {@link #init()} was not called successfully prior to calling this method
+	 */
 	public Class<?> getMainClassType() {
+		if(this.mainClassType == null)
+			throw new IllegalStateException("Plugin is not initialized");
 		return this.mainClassType;
 	}
 
+	/**
+	 * Returns the instance of the main class of this {@code Plugin}.
+	 * 
+	 * @return The instance
+	 * @throws IllegalStateException If {@link #init()} was not called successfully prior to calling this method
+	 */
 	public Object getMainClassInstance() {
+		if(this.mainClassInstance == null)
+			throw new IllegalStateException("Plugin is not initialized");
 		return this.mainClassInstance;
 	}
 
@@ -208,7 +249,8 @@ public class Plugin {
 		return path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
 	}
 
-	private static class PluginClassLoader extends URLClassLoader {
+
+	static class PluginClassLoader extends URLClassLoader {
 
 		public PluginClassLoader() {
 			super(new URL[0], ClassLoader.getSystemClassLoader());

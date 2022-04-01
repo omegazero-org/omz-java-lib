@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
@@ -31,13 +33,25 @@ public class PluginManager implements Iterable<Plugin> {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
+	/**
+	 * Exit the method when an error occurs while loading a plugin, rethrowing the caught exception.
+	 */
 	public static final int EXIT_ON_ERROR = 1;
+	/**
+	 * Try to load any files, not only files ending with {@code .jar}.
+	 */
 	public static final int ALLOW_NONJAR = 2;
+	/**
+	 * Search for additional plugins in subdirectories.
+	 */
 	public static final int RECURSIVE = 4;
+	/**
+	 * Allow loading plugins that are not contained within a single file but within a directory. This flag is not affected by {@code ALLOW_NONJAR}.
+	 */
 	public static final int ALLOW_DIRS = 8;
 
 
-	private final Plugin.PluginClassLoader classLoader = new Plugin.PluginClassLoader();
+	private final PluginClassLoader classLoader = new PluginClassLoader();
 	private final List<Plugin> plugins = new ArrayList<>();
 
 
@@ -54,18 +68,10 @@ public class PluginManager implements Iterable<Plugin> {
 	}
 
 	/**
-	 * Searches for plugins in the given directory and loads them using {@link PluginManager#loadPlugin(Path)}.
+	 * Searches for plugins in the given directory and loads them using {@link #loadPlugin(Path)}.
 	 * <p>
-	 * The search behavior may be configured using the <b>flags</b> parameter. This parameter is a bit field of {@link PluginManager#EXIT_ON_ERROR},
-	 * {@link PluginManager#ALLOW_NONJAR}, {@link PluginManager#RECURSIVE} or {@link PluginManager#ALLOW_DIRS}. The flags have the following behavior:
-	 * <ul>
-	 * <li><code>EXIT_ON_ERROR</code> - Exit this function when an error occurs while loading a plugin, rethrowing the caught exception</li>
-	 * <li><code>ALLOW_NONJAR</code> - Try to load files that do not end in <code>.jar</code></li>
-	 * <li><code>RECURSIVE</code> - Search for additional plugins in subdirectories</li>
-	 * <li><code>ALLOW_DIRS</code> - Allow loading plugins that are not contained within a single file but within a directory. This flag is not affected by
-	 * <code>ALLOW_NONJAR</code></li>
-	 * </ul>
-	 * <code>RECURSIVE</code> and <code>ALLOW_DIRS</code> are mutually exclusive. If both are specified, the function behaves as if only <code>RECURSIVE</code> were set.
+	 * The search behavior may be configured using the <b>flags</b> parameter. This parameter is a bit field of {@link #EXIT_ON_ERROR}, {@link #ALLOW_NONJAR}, {@link #RECURSIVE}
+	 * and {@link #ALLOW_DIRS}. {@code RECURSIVE} and {@code ALLOW_DIRS} are mutually exclusive. If both are specified, the function behaves as if only {@code RECURSIVE} were set.
 	 * 
 	 * @param path The directory to load plugins from
 	 * @param flags Bit field of flags
@@ -78,7 +84,6 @@ public class PluginManager implements Iterable<Plugin> {
 		Path p;
 		while(paths.hasNext()){
 			p = paths.next();
-			logger.trace("Found ", p);
 			boolean isDirectory = Files.isDirectory(p);
 			if((flags & RECURSIVE) != 0 && isDirectory){
 				logger.trace("Entering directory ", path);
@@ -102,19 +107,89 @@ public class PluginManager implements Iterable<Plugin> {
 	}
 
 	/**
+	 * Searches for plugins in the JAR file at the given path, by attempting to load any nested JAR files, whose relative path in the given JAR file start with <b>innerPath</b>.
+	 * <p>
+	 * The search behavior may be configured using the <b>flags</b> parameter. This parameter is a bit field of {@link #EXIT_ON_ERROR} and {@link #ALLOW_NONJAR}.
+	 * 
+	 * @param jarFilePath The path of the wrapping JAR file
+	 * @param innerPath The relative path prefix in the JAR file
+	 * @param flags Bit field of flags
+	 * @return The number of plugins loaded
+	 * @throws IOException If an IO error occurs
+	 * @since 2.8
+	 */
+	public int loadFromJar(Path jarFilePath, String innerPath, int flags) throws IOException {
+		int count = 0;
+		if(!innerPath.endsWith("/"))
+			innerPath += "/";
+		try(JarFile jar = new JarFile(jarFilePath.toFile())){
+			java.util.Enumeration<JarEntry> jarEntries = jar.entries();
+			while(jarEntries.hasMoreElements()){
+				JarEntry entry = jarEntries.nextElement();
+				String entryName = entry.getName();
+				if(entry.isDirectory() || !entryName.startsWith(innerPath) || (((flags & ALLOW_NONJAR) == 0) && !entryName.toLowerCase().endsWith(".jar")))
+					continue;
+				String path = jarFilePath + "/" + entryName;
+				logger.trace("Loading nested JAR plugin ", path);
+				try{
+					this.initPlugin(new Plugin.JarInputStreamPlugin(path, this.classLoader, new java.util.jar.JarInputStream(jar.getInputStream(entry))));
+					count++;
+				}catch(Exception e){
+					if((flags & EXIT_ON_ERROR) != 0)
+						throw e;
+					else
+						logger.error("Error while loading plugin at ", path, ": ", e);
+				}
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Searches for plugins at the given path.
+	 * <p>
+	 * If the given <b>path</b> contains the separator {@code !/}, the path is assumed to point inside a JAR file, with the format
+	 * {@code <path to JAR file>!/<directory inside JAR file>}, and {@link #loadFromJar(Path, String, int)} is called. Otherwise, the <b>path</b> is passed unchanged to
+	 * {@link #loadFromDirectory(String, int)}.
+	 * 
+	 * @param path The path
+	 * @param flags Bit field of flags
+	 * @return The number of plugins loaded
+	 * @throws IOException If an IO error occurs
+	 * @since 2.8
+	 */
+	public int loadFromPath(String path, int flags) throws IOException {
+		int si = path.indexOf("!/");
+		if(si >= 0){
+			return this.loadFromJar(Paths.get(path.substring(0, si)), path.substring(si + 2), flags);
+		}else{
+			return this.loadFromDirectory(path, flags);
+		}
+	}
+
+
+	/**
 	 * Loads and initializes the plugin at <b>path</b> and registers it with this <code>PluginManager</code> instance.
+	 * <p>
+	 * If the given <b>path</b> is a directory, the plugin is loaded as a directory plugin, otherwise, it is loaded as a JAR plugin.
 	 * 
 	 * @param path The path of the plugin
 	 * @throws IOException If an IO error occurs
 	 */
 	public void loadPlugin(Path path) throws IOException {
-		Plugin p = new Plugin(path, this.classLoader);
-		p.init();
+		if(Files.isDirectory(path))
+			this.initPlugin(new Plugin.DirectoryPlugin(path, this.classLoader));
+		else
+			this.initPlugin(new Plugin.JarPlugin(path.toString(), this.classLoader));
+	}
+
+	private void initPlugin(Plugin plugin) {
+		plugin.init();
 		for(Plugin e : this.plugins){
-			if(e.getId().equals(p.getId()))
-				throw new InvalidPluginException(e.getName(), "A plugin with id '" + p.getId() + "' already exists");
+			if(e.getId().equals(plugin.getId()))
+				throw new InvalidPluginException(e.getName(), "A plugin with id '" + plugin.getId() + "' already exists");
 		}
-		this.plugins.add(p);
+		this.plugins.add(plugin);
 	}
 
 	/**

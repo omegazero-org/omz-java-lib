@@ -6,11 +6,20 @@
  */
 package org.omegazero.common.plugins;
 
+/**
+ * An exception thrown to indicate a {@link Plugin} is invalid.
+ * 
+ * @since 2.2
+ */
 public class InvalidPluginException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
 	public InvalidPluginException(String name, String msg) {
-		super("Plugin '" + name + "': " + msg);
+		this(name, msg, null);
+	}
+
+	public InvalidPluginException(String name, String msg, Throwable cause) {
+		super("Plugin '" + name + "': " + msg, cause);
 	}
 }

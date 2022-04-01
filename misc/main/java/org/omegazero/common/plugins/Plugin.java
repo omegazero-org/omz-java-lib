@@ -11,19 +11,20 @@
  */
 package org.omegazero.common.plugins;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
+import org.omegazero.common.util.ArrayUtil;
 
 /**
  * Represents a plugin managed by a {@link PluginManager}.
@@ -44,17 +45,16 @@ import org.omegazero.common.logging.LoggerUtil;
  * 
  * @since 2.2
  */
-public class Plugin {
+public abstract class Plugin {
 
 	private static final Logger logger = LoggerUtil.createLogger();
 
 	private static final String META_FILE_NAME = "plugin.cfg";
 
-	private final PluginClassLoader classLoader;
-	private final File pathFile;
-
 	private final String path;
-	private final boolean directoryPlugin;
+	private final PluginClassLoader classLoader;
+
+	private final String filename;
 
 	private boolean init = false;
 
@@ -68,15 +68,44 @@ public class Plugin {
 	private Class<?> mainClassType;
 	private Object mainClassInstance;
 
-	public Plugin(Path path, PluginClassLoader classLoader) {
-		this(path.toFile(), classLoader);
+	protected Plugin(String path, PluginClassLoader classLoader) {
+		this.classLoader = classLoader;
+		this.path = path;
+
+		this.filename = Plugin.getFileBaseName(path);
 	}
 
-	public Plugin(File file, PluginClassLoader classLoader) {
-		this.pathFile = file;
-		this.classLoader = classLoader;
-		this.path = this.pathFile.getAbsolutePath();
-		this.directoryPlugin = Files.isDirectory(Paths.get(this.path));
+
+	/**
+	 * Loads the file in this {@code Plugin}'s root identified by the given path and stores its data and additional information in the returned {@code LoadedClassFile}.
+	 * <p>
+	 * The file need not be a valid class file. If the file does not exist, {@code null} is returned.
+	 * 
+	 * @param relativePath The relative file path
+	 * @return The {@code LoadedClassFile} representing the file, or {@code null} if it does not exist
+	 * @throws IOException If an IO error occurs
+	 * @since 2.8
+	 * @see #loadFile(String)
+	 */
+	protected abstract LoadedClassFile loadClass(String relativePath) throws IOException;
+
+
+	/**
+	 * Loads the file in this {@code Plugin}'s root identified by the given path.
+	 * <p>
+	 * If the file does not exist, {@code null} is returned.
+	 * 
+	 * @param relativePath The relative file path
+	 * @return The file content
+	 * @throws IOException If an IO error occurs
+	 * @since 2.8
+	 * @see #loadClass(String)
+	 */
+	public byte[] loadFile(String relativePath) throws IOException {
+		LoadedClassFile f = this.loadClass(relativePath);
+		if(f == null)
+			return null;
+		return f.data;
 	}
 
 
@@ -88,9 +117,9 @@ public class Plugin {
 			return;
 		this.init = true;
 		try{
-			this.classLoader.addURL(this.pathFile.toURI().toURL());
+			this.classLoader.addPlugin(this);
 			this.loadMetaFile();
-			logger.debug("Loading main class of '", this.getName(), "': ", this.mainClass);
+			logger.debug("Loading main class of '", this.getName(), "' (", this.getClass().getSimpleName(), "): ", this.mainClass);
 			this.mainClassType = Class.forName(this.mainClass, true, this.classLoader);
 			this.mainClassInstance = this.mainClassType.newInstance();
 		}catch(IOException | ReflectiveOperationException e){
@@ -98,32 +127,11 @@ public class Plugin {
 		}
 	}
 
-	private InputStream tryLoadMetaFile(String name) {
-		try{
-			String file;
-			if(this.directoryPlugin)
-				file = "file:" + this.path + "/" + name;
-			else
-				file = "jar:file:" + this.path + "!/" + name;
-			return new URL(file).openConnection().getInputStream();
-		}catch(IOException e){
-			return null;
-		}
-	}
-
 	private void loadMetaFile() throws IOException {
-		String filename = Plugin.getFileBaseName(this.path);
-
-		InputStream fileIs = this.tryLoadMetaFile(Plugin.META_FILE_NAME);
-		if(fileIs == null){
-			int e = filename.lastIndexOf('.');
-			fileIs = this.tryLoadMetaFile((e > 0 ? filename.substring(0, e) : filename) + ".cfg");
-		}
-		if(fileIs == null)
+		byte[] bdata = this.loadFile(Plugin.META_FILE_NAME);
+		if(bdata == null)
 			throw new InvalidPluginException(this.getName(), "Missing metadata file");
 
-		byte[] bdata = new byte[fileIs.available()];
-		fileIs.read(bdata, 0, bdata.length);
 		String[] lines = new String(bdata).replace('\r', '\n').split("\n");
 		for(String l : lines){
 			l = l.trim();
@@ -160,7 +168,7 @@ public class Plugin {
 		if(this.id == null)
 			throw new InvalidPluginException(this.getName(), "Missing required 'id' option in meta file");
 		if(this.name == null)
-			this.name = filename;
+			this.name = this.filename;
 		if(this.mainClass == null)
 			throw new InvalidPluginException(this.getName(), "Missing required 'mainClass' option in meta file");
 	}
@@ -188,7 +196,7 @@ public class Plugin {
 	 * @return The name of this plugin
 	 */
 	public String getName() {
-		return this.name != null ? this.name : Plugin.getFileBaseName(this.path);
+		return this.name != null ? this.name : this.filename;
 	}
 
 	/**
@@ -250,15 +258,93 @@ public class Plugin {
 	}
 
 
-	static class PluginClassLoader extends URLClassLoader {
+	/**
+	 * Represents a loaded file with an optional {@link Manifest} and {@link CodeSource}.
+	 * 
+	 * @since 2.8
+	 */
+	protected static class LoadedClassFile {
 
-		public PluginClassLoader() {
-			super(new URL[0], ClassLoader.getSystemClassLoader());
+		public final byte[] data;
+		public final Manifest manifest;
+		public final CodeSource codeSource;
+
+		public LoadedClassFile(byte[] data, Manifest manifest, CodeSource codeSource) {
+			this.data = data;
+			this.manifest = manifest;
+			this.codeSource = codeSource;
+		}
+	}
+
+
+	static class DirectoryPlugin extends Plugin {
+
+
+		private final Path rootPath;
+
+		public DirectoryPlugin(Path path, PluginClassLoader classLoader) {
+			super(path.toAbsolutePath().toString(), classLoader);
+			this.rootPath = path;
+		}
+
+
+		@Override
+		public LoadedClassFile loadClass(String relativePath) throws IOException {
+			FileInputStream fis;
+			try{
+				fis = new FileInputStream(this.rootPath.resolve(relativePath).toFile());
+			}catch(IOException e){
+				return null;
+			}
+			return new LoadedClassFile(ArrayUtil.readInputStreamToByteArray(fis), null, null);
+		}
+	}
+
+	static class JarPlugin extends Plugin {
+
+
+		private final JarFile jarFile;
+
+		public JarPlugin(String path, PluginClassLoader classLoader) throws IOException {
+			this(path, classLoader, new JarFile(path));
+		}
+
+		public JarPlugin(String path, PluginClassLoader classLoader, JarFile jarFile) {
+			super(path, classLoader);
+			this.jarFile = jarFile;
 		}
 
 		@Override
-		public void addURL(URL url) {
-			super.addURL(url);
+		public LoadedClassFile loadClass(String relativePath) throws IOException {
+			JarEntry entry = this.jarFile.getJarEntry(relativePath);
+			if(entry == null)
+				return null;
+			return new LoadedClassFile(ArrayUtil.readInputStreamToByteArray(this.jarFile.getInputStream(entry)), this.jarFile.getManifest(),
+					new CodeSource(null, entry.getCodeSigners()));
+		}
+	}
+
+	static class JarInputStreamPlugin extends Plugin {
+
+
+		private final Manifest manifest;
+		private final Map<String, Map.Entry<JarEntry, byte[]>> entries = new HashMap<>();
+
+		public JarInputStreamPlugin(String path, PluginClassLoader classLoader, JarInputStream jarInputStream) throws IOException {
+			super(path, classLoader);
+			this.manifest = jarInputStream.getManifest();
+			JarEntry entry;
+			while((entry = jarInputStream.getNextJarEntry()) != null){
+				this.entries.put(entry.getName(), new java.util.AbstractMap.SimpleEntry<>(entry, ArrayUtil.readInputStreamToByteArray(jarInputStream)));
+			}
+		}
+
+		@Override
+		public LoadedClassFile loadClass(String relativePath) throws IOException {
+			Map.Entry<JarEntry, byte[]> e = this.entries.get(relativePath);
+			if(e == null)
+				return null;
+			return new LoadedClassFile(e.getValue(), this.manifest, new CodeSource(null, e.getKey().getCodeSigners()));
 		}
 	}
 }

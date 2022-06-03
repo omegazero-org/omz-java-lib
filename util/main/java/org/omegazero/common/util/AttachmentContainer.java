@@ -7,12 +7,12 @@
 package org.omegazero.common.util;
 
 /**
- * Represents an object that can hold attributes (any {@code Object}), each identified by a unique name string.
+ * Represents an object that can hold attachments (any {@code Object}s), each identified by a unique name string.
  * 
  * @since 2.9
- * @see SimpleAttributeContainer
+ * @see SimpleAttachmentContainer
  */
-public interface AttributeContainer {
+public interface AttachmentContainer {
 
 
 	/**

@@ -11,17 +11,17 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * An {@link AttributeContainer} implementation using a {@link HashMap}, which may be used as a superclass for more specific objects.
+ * An {@link AttachmentContainer} implementation using a {@link HashMap}, which may be used as a superclass for more specific objects.
  * <p>
  * This class is not thread-safe.
  * 
  * @since 2.9
  */
-public class SimpleAttributeContainer implements AttributeContainer {
+public class SimpleAttachmentContainer implements AttachmentContainer {
 
 
 	/**
-	 * Map containing the values of this {@code SimpleAttributeContainer}.
+	 * Map containing the values of this {@code SimpleAttachmentContainer}.
 	 */
 	protected Map<String, Object> attachments = null;
 

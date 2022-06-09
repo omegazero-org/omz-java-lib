@@ -13,7 +13,7 @@ import java.util.function.Consumer;
  * 
  * @since 2.6
  */
-public class LambdaTask extends Task {
+public class LambdaTask extends AbstractTask {
 
 
 	private final Consumer<Object[]> handler;

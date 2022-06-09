@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * 
  * @since 2.6
  */
-public class ReflectTask extends Task {
+public class ReflectTask extends AbstractTask {
 
 
 	private final Method method;

@@ -205,15 +205,22 @@ public class TaskQueueExecutor {
 			throw new IllegalStateException("Not running");
 		double lowestP = 2;
 		WorkerThread lowestLoadedThread = null;
-		for(WorkerThread wt : this.workerThreads){
-			double p = (double) wt.executedTasks / this.totalTasksExecuted;
-			if(p < lowestP){
-				lowestP = p;
-				lowestLoadedThread = wt;
+		if(this.totalTasksExecuted > 0){
+			for(WorkerThread wt : this.workerThreads){
+				double p = (double) wt.executedTasks / this.totalTasksExecuted;
+				if(p < lowestP){
+					lowestP = p;
+					lowestLoadedThread = wt;
+				}
 			}
 		}
-		if(lowestLoadedThread == null)
-			lowestLoadedThread = this.newWorkerThread();
+		if(lowestLoadedThread == null){
+			if(this.workerThreads.size() < this.maxWorkerThreadCount){
+				lowestLoadedThread = this.newWorkerThread();
+			}else{
+				lowestLoadedThread = this.workerThreads.get((int) (Math.random() * this.workerThreads.size()));
+			}
+		}
 		return new Handle(lowestLoadedThread);
 	}
 
@@ -329,7 +336,8 @@ public class TaskQueueExecutor {
 
 
 	private WorkerThread newWorkerThread() {
-		assert this.running;
+		if(!this.running)
+			throw new IllegalStateException("Not running");
 		if(this.workerThreads.size() >= this.maxWorkerThreadCount)
 			throw new IllegalStateException("Max worker thread count reached");
 		WorkerThread n = new WorkerThread();
@@ -539,33 +547,42 @@ public class TaskQueueExecutor {
 
 		private Task nextTask() throws InterruptedException {
 			TaskQueueExecutor.this.lock.lockInterruptibly();
-			this.waiting = true;
 			try{
-				while(true){
+				while(true){ // for staying in this method if a task is a DelegatingHandleTask for another thread
 					Task task;
 					if((task = this.localQueue.poll()) != null)
 						return task;
 					while((task = TaskQueueExecutor.this.queue.poll()) == null){
-						TaskQueueExecutor.this.taskWaitCondition.await();
-						if((task = this.localQueue.poll()) != null)
+						boolean interrupted = false;
+						this.waiting = true;
+						try{
+							TaskQueueExecutor.this.taskWaitCondition.await();
+							interrupted = Thread.interrupted();
+						}catch(InterruptedException e){
+							interrupted = true;
+						}finally{
+							this.waiting = false;
+						}
+						if(!TaskQueueExecutor.this.running)
+							throw new InterruptedException("exiting");
+						else if((task = this.localQueue.poll()) != null)
 							return task;
+						else if(interrupted)
+							throw new AssertionError("WorkerThread interrupted unexpectedly");
 					}
 					if(task instanceof DelegatingHandleTask){
 						DelegatingHandleTask htask = (DelegatingHandleTask) task;
 						WorkerThread wt = htask.handle.wt;
 						if(wt != this){
 							wt.localQueue.add(task);
-
-							// unsafe?
 							if(wt.waiting)
-								java.util.concurrent.locks.LockSupport.unpark(wt);
+								wt.interrupt();
 							continue;
 						}
 					}
 					return task;
 				}
 			}finally{
-				this.waiting = false;
 				TaskQueueExecutor.this.lock.unlock();
 			}
 		}
@@ -590,6 +607,7 @@ public class TaskQueueExecutor {
 					else
 						e.printStackTrace();
 				}finally{
+					Thread.interrupted(); // clear interrupt status
 					this.executedTasks++;
 					this.executing = false;
 					TaskQueueExecutor.this.workingThreads.decrementAndGet();

@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 
 import org.omegazero.common.event.task.LambdaTask;
 import org.omegazero.common.event.task.ReflectTask;
+import org.omegazero.common.event.task.RunnableTask;
 import org.omegazero.common.event.task.Task;
 
 /**
@@ -144,11 +145,23 @@ public class TaskQueueExecutor {
 	 * @param args The arguments to pass to the task handler when this task is executed
 	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
 	 * @return <code>true</code> if the task was successfully queued
-	 * @see #queue(Task)
 	 * @see ReflectTask#ReflectTask(Method, Object, Object[], int)
 	 */
 	public boolean queue(java.lang.reflect.Method method, Object callerInstance, int priority, Object... args) {
 		return this.queue(new ReflectTask(method, callerInstance, args, priority));
+	}
+
+	/**
+	 * Creates a new {@link RunnableTask} instance and adds it to the event queue using {@link #queue(Task)}.
+	 * 
+	 * @param handler The task handler
+	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
+	 * @return <code>true</code> if the task was successfully queued
+	 * @since 2.9
+	 * @see RunnableTask#RunnableTask(Runnable, int)
+	 */
+	public boolean queue(Runnable handler, int priority) {
+		return this.queue(new RunnableTask(handler, priority));
 	}
 
 	/**
@@ -158,7 +171,6 @@ public class TaskQueueExecutor {
 	 * @param args The arguments to pass to the task handler when this task is executed
 	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
 	 * @return <code>true</code> if the task was successfully queued
-	 * @see #queue(Task)
 	 * @see LambdaTask#LambdaTask(Consumer, Object[], int)
 	 */
 	public boolean queue(Consumer<Object[]> handler, int priority, Object... args) {
@@ -507,6 +519,17 @@ public class TaskQueueExecutor {
 		 */
 		public boolean queue(java.lang.reflect.Method method, Object callerInstance, int priority, Object... args) {
 			return this.queue(new ReflectTask(method, callerInstance, args, priority));
+		}
+
+		/**
+		 * Equivalent to {@link TaskQueueExecutor#queue(Runnable, int)}, but queued with this handle.
+		 * 
+		 * @param handler The task handler
+		 * @param priority The priority of this task
+		 * @return <code>true</code> if the task was successfully queued
+		 */
+		public boolean queue(Runnable handler, int priority) {
+			return this.queue(new RunnableTask(handler, priority));
 		}
 
 		/**

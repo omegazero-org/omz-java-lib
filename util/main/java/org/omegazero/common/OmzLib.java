@@ -17,16 +17,18 @@ package org.omegazero.common;
 public class OmzLib {
 
 	/**
-	 * The version string of <i>omz-java-lib</i>.<br>
-	 * <br>
+	 * The version string of <i>omz-java-lib</i>.
+	 * <p>
 	 * This value is set by the CI build pipeline based on the event that triggered the build. Otherwise, this string is always <code>"$BUILDVERSION"</code>.
+	 * <p>
+	 * {@link #getVersion()} should be used to retrieve the value to prevent compile-time string inlining.
 	 */
 	public static final String VERSION = "$BUILDVERSION";
 
 
 	/**
-	 * Prints the version string and configured log level using a <code>Logger</code> from the <i>logging</i> library. If the library is not available, the string is printed
-	 * to <code>System.err</code>.
+	 * Prints the version string and configured log level using a {@code Logger} from the <i>logging</i> library. If the library is not available, the string is printed to
+	 * {@code System.err}.
 	 */
 	public static void printBrand() {
 		String s = "omz-java-lib version " + OmzLib.VERSION;
@@ -38,5 +40,15 @@ public class OmzLib {
 		}catch(ReflectiveOperationException e){
 			System.err.println(s);
 		}
+	}
+
+	/**
+	 * Returns the {@linkplain #VERSION version string}.
+	 * 
+	 * @return The version string
+	 * @since 2.9
+	 */
+	public static String getVersion() {
+		return VERSION;
 	}
 }

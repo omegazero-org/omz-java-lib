@@ -8,3 +8,5 @@ Prebuilt full JARs: <https://drone.omegazero.org/build-artifacts/java/org.omegaz
 
 Javadoc: <https://docs.omegazero.org/javadoc/omz-java-lib/>
 
+Compatible with Java 8 or above. No external dependencies unless otherwise specified in the directory README of the library component.
+

@@ -90,10 +90,23 @@ public final class Tasks {
 	}
 
 	/**
+	 * See {@link TaskScheduler#clear(Object)}.
+	 * 
+	 * @param tt The {@link TimerTask} to cancel
+	 * @return {@code true} if <b>tt</b> is not {@code null}
+	 * @throws ClassCastException If the given parameter is not a {@code TimerTask}
+	 * @since 2.9.1
+	 */
+	public static boolean clear(Object tt) {
+		init();
+		return globalInstance.clear(tt);
+	}
+
+	/**
 	 * See {@link TaskScheduler#clear(TimerTask)}.
 	 * 
 	 * @param tt The {@link TimerTask} to cancel
-	 * @return Whether the task existed
+	 * @return {@code true} if <b>tt</b> is not {@code null}
 	 * @since 2.1
 	 */
 	public static boolean clear(TimerTask tt) {
@@ -105,9 +118,11 @@ public final class Tasks {
 	 * See {@link TaskScheduler#clear(long)}.
 	 * 
 	 * @param id The id of the {@link TimerTask} to cancel
-	 * @return Whether the task existed
+	 * @return {@code true} if the task was found and successfully canceled
 	 * @since 2.1
+	 * @deprecated Since 2.9.1
 	 */
+	@Deprecated
 	public static boolean clear(long id) {
 		init();
 		return globalInstance.clear(id);

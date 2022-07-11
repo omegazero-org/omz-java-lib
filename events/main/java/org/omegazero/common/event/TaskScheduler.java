@@ -18,10 +18,10 @@ import java.util.function.Consumer;
 import org.omegazero.common.event.task.LambdaTask;
 
 /**
- * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's <tt>setTimeout</tt> and <tt>setInterval</tt>.<br>
- * <br>
- * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses an {@link EventQueueExecutor}.<br>
- * <br>
+ * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's <tt>setTimeout</tt> and <tt>setInterval</tt>.
+ * <p>
+ * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses an {@link EventQueueExecutor}.
+ * <p>
  * Timing may be inaccurate, depending on the platform. The implementation uses {@link Object#wait(long)}.
  * 
  * @since 2.1
@@ -137,14 +137,25 @@ public class TaskScheduler {
 	private void queue(TimerTask task) {
 		synchronized(this.queue){
 			int index = this.queue.size();
-			for(int i = 0; i < this.queue.size(); i++){
-				if(this.queue.get(i).time > task.time){
-					index = i;
+			int l = 0;
+			int r = this.queue.size() - 2;
+			while(l <= r){
+				int m = (l + r) / 2;
+				TimerTask qtask = this.queue.get(m);
+				TimerTask qtaskNext = this.queue.get(m + 1);
+				if(task.time > qtaskNext.time){
+					l = m + 1;
+				}else if(task.time < qtask.time){
+					r = m - 1;
+				}else{
+					index = m + 1;
 					break;
 				}
 			}
+			if(r < 0)
+				index = 0;
 			this.queue.add(index, task);
-			this.queue.notify();
+			this.queue.notifyAll();
 		}
 	}
 
@@ -153,24 +164,45 @@ public class TaskScheduler {
 	 * Cancels the given timer task.
 	 * 
 	 * @param tt The {@link TimerTask} to cancel
-	 * @return <b>true</b> if the task was found and successfully canceled
+	 * @return {@code true} if <b>tt</b> is not {@code null}
+	 * @throws ClassCastException If the given parameter is not a {@code TimerTask}
+	 * @since 2.9.1
+	 * @see #clear(TimerTask)
+	 * @see TimerTask#cancel()
+	 */
+	public boolean clear(Object tt) {
+		return this.clear((TimerTask) tt);
+	}
+
+	/**
+	 * Cancels the given timer task.
+	 * 
+	 * @param tt The {@link TimerTask} to cancel
+	 * @return {@code true} if <b>tt</b> is not {@code null}
 	 * @since 2.1
-	 * @see #clear(long)
 	 * @see TimerTask#cancel()
 	 */
 	public boolean clear(TimerTask tt) {
-		return clear(tt.id);
+		if(tt == null)
+			return false;
+		synchronized(this.queue){
+			tt.canceled = true;
+			this.queue.notifyAll();
+			return true;
+		}
 	}
 
 	/**
 	 * Cancels the given timer task.
 	 * 
 	 * @param id The id of the {@link TimerTask} to cancel
-	 * @return <b>true</b> if the task was found and successfully canceled
+	 * @return {@code true} if the task was found and successfully canceled
 	 * @since 2.1
 	 * @see #clear(TimerTask)
 	 * @see TimerTask#cancel()
+	 * @deprecated Since 2.9.1, because of poor performance. Use {@link #clear(TimerTask)} or {@link #clear(Object)} instead.
 	 */
+	@Deprecated
 	public boolean clear(long id) {
 		synchronized(this.queue){
 			for(int i = 0; i < this.queue.size(); i++){

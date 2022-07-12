@@ -16,24 +16,35 @@ import java.util.function.Consumer;
 import org.omegazero.common.event.TaskScheduler.TimerTask;
 
 /**
- * Convenience class for globally scheduled tasks using a {@link TaskScheduler}.<br>
- * <br>
- * See methods in {@link TaskScheduler} for detailed information.
+ * Convenience class for globally scheduled tasks using a {@link TaskScheduler}.
+ * <p>
+ * This class uses a single {@link TaskScheduler} instance, accessible through the constant {@link #I}.
  * 
  * @since 2.1
  */
 public final class Tasks {
 
-	private static TaskScheduler globalInstance = null;
+	/**
+	 * The {@link TaskScheduler} instance.
+	 *
+	 * @since 2.9.1
+	 * @see #TASKS
+	 */
+	public static final TaskScheduler I;
+
+	/**
+	 * The {@link TaskScheduler} instance, an alias of {@link #I}.
+	 * <p>
+	 * This constant may be used instead of {@link #I} in a static import, because it has a more descriptive name.
+	 *
+	 * @since 2.9.1
+	 */
+	public static final TaskScheduler TASKS;
+
 
 	private Tasks() {
 	}
 
-	private static void init() {
-		if(globalInstance == null){
-			globalInstance = new TaskScheduler();
-		}
-	}
 
 	/**
 	 * See {@link TaskScheduler#timeout(Runnable, long)}.
@@ -42,10 +53,11 @@ public final class Tasks {
 	 * @param timeout The timeout in milliseconds
 	 * @return The {@link TimerTask} instance
 	 * @since 2.6
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
+	@Deprecated
 	public static TimerTask timeout(Runnable handler, long timeout) {
-		init();
-		return globalInstance.timeout(handler, timeout);
+		return I.timeout(handler, timeout);
 	}
 
 	/**
@@ -56,10 +68,11 @@ public final class Tasks {
 	 * @param args    Handler arguments
 	 * @return The {@link TimerTask} instance
 	 * @since 2.1
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
+	@Deprecated
 	public static TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
-		init();
-		return globalInstance.timeout(handler, timeout, args);
+		return I.timeout(handler, timeout, args);
 	}
 
 	/**
@@ -69,10 +82,11 @@ public final class Tasks {
 	 * @param timeout The interval in milliseconds
 	 * @return The {@link TimerTask} instance
 	 * @since 2.6
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
+	@Deprecated
 	public static TimerTask interval(Runnable handler, long timeout) {
-		init();
-		return globalInstance.interval(handler, timeout);
+		return I.interval(handler, timeout);
 	}
 
 	/**
@@ -83,23 +97,11 @@ public final class Tasks {
 	 * @param args    Handler arguments
 	 * @return The {@link TimerTask} instance
 	 * @since 2.1
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
+	@Deprecated
 	public static TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
-		init();
-		return globalInstance.interval(handler, interval, args);
-	}
-
-	/**
-	 * See {@link TaskScheduler#clear(Object)}.
-	 * 
-	 * @param tt The {@link TimerTask} to cancel
-	 * @return {@code true} if <b>tt</b> is not {@code null}
-	 * @throws ClassCastException If the given parameter is not a {@code TimerTask}
-	 * @since 2.9.1
-	 */
-	public static boolean clear(Object tt) {
-		init();
-		return globalInstance.clear(tt);
+		return I.interval(handler, interval, args);
 	}
 
 	/**
@@ -108,10 +110,11 @@ public final class Tasks {
 	 * @param tt The {@link TimerTask} to cancel
 	 * @return {@code true} if <b>tt</b> is not {@code null}
 	 * @since 2.1
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
+	@Deprecated
 	public static boolean clear(TimerTask tt) {
-		init();
-		return globalInstance.clear(tt);
+		return I.clear(tt);
 	}
 
 	/**
@@ -120,32 +123,33 @@ public final class Tasks {
 	 * @param id The id of the {@link TimerTask} to cancel
 	 * @return {@code true} if the task was found and successfully canceled
 	 * @since 2.1
-	 * @deprecated Since 2.9.1
+	 * @deprecated Since 2.9.1, use {@link #I}
 	 */
 	@Deprecated
 	public static boolean clear(long id) {
-		init();
-		return globalInstance.clear(id);
+		return I.clear(id);
 	}
 
 	/**
-	 * See {@link TaskScheduler#exit()}.
+	 * See {@link TaskScheduler#exit()}. Called with {@link #I}.
 	 */
 	public static void exit() {
-		if(globalInstance != null){
-			globalInstance.exit();
-			globalInstance = null;
-		}
+		I.exit();
 	}
 
 	/**
-	 * See {@link TaskScheduler#setErrorHandler(Consumer)}.
+	 * See {@link TaskScheduler#setErrorHandler(Consumer)}. Called with {@link #I}.
 	 * 
 	 * @param errorHandler The error handler
 	 * @since 2.6
 	 */
 	public static void setErrorHandler(Consumer<Throwable> errorHandler) {
-		init();
-		globalInstance.setErrorHandler(errorHandler);
+		I.setErrorHandler(errorHandler);
+	}
+
+
+	static{
+		I = new TaskScheduler();
+		TASKS = I;
 	}
 }

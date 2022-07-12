@@ -26,7 +26,7 @@ steps:
   - mkdir -p build/util/bin/META-INF
   - cp LICENSE_BIN build/util/bin/META-INF/LICENSE
   - find util/main/java -iname "*.java" > build/util/srcfiles
-  - javac -version -verbose -d build/util/bin @build/util/srcfiles
+  - javac -version -verbose -Xlint:all,-processing -d build/util/bin @build/util/srcfiles
   - jar cf build-util.jar -C build/util/bin .
   depends_on:
   - prepare-dependencies
@@ -38,7 +38,7 @@ steps:
   - mkdir -p build/config/bin/META-INF
   - cp LICENSE_BIN build/config/bin/META-INF/LICENSE
   - find config/main/java -iname "*.java" > build/config/srcfiles
-  - javac -version -verbose -d build/config/bin @build/config/srcfiles -cp json-20211205.jar
+  - javac -version -verbose -Xlint:all,-processing -d build/config/bin @build/config/srcfiles -cp json-20211205.jar
   - jar cf build-config.jar -C build/config/bin .
   depends_on:
   - prepare-dependencies
@@ -50,7 +50,7 @@ steps:
   - mkdir -p build/events/bin/META-INF
   - cp LICENSE_BIN build/events/bin/META-INF/LICENSE
   - find events/main/java -iname "*.java" > build/events/srcfiles
-  - javac -version -verbose -d build/events/bin @build/events/srcfiles -cp build-util.jar
+  - javac -version -verbose -Xlint:all,-processing -d build/events/bin @build/events/srcfiles -cp build-util.jar
   - jar cf build-events.jar -C build/events/bin .
   depends_on:
   - prepare-dependencies
@@ -63,7 +63,7 @@ steps:
   - mkdir -p build/logging/bin/META-INF
   - cp LICENSE_BIN build/logging/bin/META-INF/LICENSE
   - find logging/main/java -iname "*.java" > build/logging/srcfiles
-  - javac -version -verbose -d build/logging/bin @build/logging/srcfiles -cp build-util.jar:build-events.jar
+  - javac -version -verbose -Xlint:all,-processing -d build/logging/bin @build/logging/srcfiles -cp build-util.jar:build-events.jar
   - jar cf build-logging.jar -C build/logging/bin .
   depends_on:
   - prepare-dependencies
@@ -76,7 +76,7 @@ steps:
   commands:
   - mkdir -p build/misc/bin
   - find misc/main/java -iname "*.java" > build/misc/srcfiles
-  - javac -version -verbose -d build/misc/bin @build/misc/srcfiles -cp build-util.jar:build-config.jar:build-events.jar:build-logging.jar
+  - javac -version -verbose -Xlint:all,-processing -d build/misc/bin @build/misc/srcfiles -cp build-util.jar:build-config.jar:build-events.jar:build-logging.jar
   - mkdir -p build/all/bin/META-INF
   - cp -r build/util/bin/* build/config/bin/* build/events/bin/* build/logging/bin/* build/misc/bin/* build/all/bin
   - cp LICENSE_BIN build/all/bin/META-INF/LICENSE

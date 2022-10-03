@@ -87,7 +87,7 @@ public class TaskScheduler {
 	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
-		TimerTask tt = new TimerTask(++this.idCounter, handler, System.currentTimeMillis() + timeout, 0, args);
+		TimerTask tt = new TimerTask(++this.idCounter, handler, System.nanoTime() + timeout * 1000000L, 0, args);
 		queue(tt);
 		return tt;
 	}
@@ -122,7 +122,7 @@ public class TaskScheduler {
 	 * @see #timeout(Consumer, long, Object...)
 	 */
 	public TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
-		TimerTask tt = new TimerTask(++this.idCounter, handler, System.currentTimeMillis() + interval, interval, args);
+		TimerTask tt = new TimerTask(++this.idCounter, handler, System.nanoTime() + interval * 1000000L, interval * 1000000L, args);
 		queue(tt);
 		return tt;
 	}
@@ -187,6 +187,7 @@ public class TaskScheduler {
 			return false;
 		synchronized(this.queue){
 			tt.canceled = true;
+			tt.destroy();
 			this.queue.notifyAll();
 			return true;
 		}
@@ -200,7 +201,7 @@ public class TaskScheduler {
 	 * @since 2.1
 	 * @see #clear(TimerTask)
 	 * @see TimerTask#cancel()
-	 * @deprecated Since 2.9.1, because of poor performance. Use {@link #clear(TimerTask)} or {@link #clear(Object)} instead.
+	 * @deprecated Since 2.9.1, because of poor efficiency. Use {@link #clear(TimerTask)} or {@link #clear(Object)} instead.
 	 */
 	@Deprecated
 	public boolean clear(long id) {
@@ -209,6 +210,7 @@ public class TaskScheduler {
 				TimerTask t = this.queue.get(i);
 				if(t.id == id){
 					t.canceled = true;
+					t.destroy();
 					this.queue.notifyAll();
 					return true;
 				}
@@ -241,17 +243,17 @@ public class TaskScheduler {
 		synchronized(this.queue){
 			if(this.queue.size() < 1)
 				return;
-			long time = System.currentTimeMillis();
+			long time = System.nanoTime();
 			TimerTask t = this.queue.get(0);
 
 			if(t.canceled)
 				this.queue.remove(0);
 			else if(t.time > time)
-				this.queue.wait(t.time - time);
+				this.queue.wait((t.time - time) / 1000000L);
 
 			if(this.queue.size() < 1)
 				return;
-			time = System.currentTimeMillis();
+			time = System.nanoTime();
 			t = this.queue.get(0);
 			if(t.canceled){
 				this.queue.remove(0);
@@ -421,30 +423,34 @@ public class TaskScheduler {
 
 
 		/**
+		 * Returns the {@link TaskScheduler}-instance-wide unique ID of this {@link TimerTask}.
 		 * 
-		 * @return The {@link TaskScheduler}-instance-wide unique ID of this {@link TimerTask}
+		 * @return The ID
 		 */
 		public long getId() {
 			return this.id;
 		}
 
 		/**
+		 * Returns the absolute time in nanoseconds when this task is scheduled to run.
 		 * 
-		 * @return The absolute time in milliseconds when this task is scheduled to run
+		 * @return The absolute time
 		 */
 		public long getTime() {
 			return this.time;
 		}
 
 		/**
+		 * Returns the interval in nanoseconds between running this task. This value is 0 for a one-time task.
 		 * 
-		 * @return The interval in milliseconds between running this task
+		 * @return The interval period
 		 */
 		public long getPeriod() {
 			return this.period;
 		}
 
 		/**
+		 * Returns {@code true} if this task was defined as a daemon task.
 		 * 
 		 * @return Whether this task was defined as a daemon task
 		 * @see #daemon()
@@ -454,6 +460,7 @@ public class TaskScheduler {
 		}
 
 		/**
+		 * Returns {@code true} if this task is canceled.
 		 * 
 		 * @return Whether this task is canceled
 		 */

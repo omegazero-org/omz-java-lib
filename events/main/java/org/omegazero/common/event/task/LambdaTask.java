@@ -6,6 +6,7 @@
  */
 package org.omegazero.common.event.task;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -16,7 +17,7 @@ import java.util.function.Consumer;
 public class LambdaTask extends AbstractTask {
 
 
-	private final Consumer<Object[]> handler;
+	private Consumer<Object[]> handler;
 
 	/**
 	 * Creates a new {@link LambdaTask}.
@@ -27,7 +28,7 @@ public class LambdaTask extends AbstractTask {
 	 */
 	public LambdaTask(Consumer<Object[]> handler, Object[] args) {
 		super(args);
-		this.handler = handler;
+		this.handler = Objects.requireNonNull(handler);
 	}
 
 	/**
@@ -40,12 +41,24 @@ public class LambdaTask extends AbstractTask {
 	 */
 	public LambdaTask(Consumer<Object[]> handler, Object[] args, int priority) {
 		super(args, priority);
-		this.handler = handler;
+		this.handler = Objects.requireNonNull(handler);
+	}
+
+
+	/**
+	 * Removes the reference to the handler passed in the constructor.
+	 *
+	 * @since 2.9.2
+	 */
+	public void destroy(){
+		this.handler = null;
 	}
 
 
 	@Override
 	protected void execute(Object[] args) throws Exception {
+		if(this.handler == null)
+			throw new IllegalStateException("This task is destroyed");
 		this.handler.accept(args);
 	}
 }

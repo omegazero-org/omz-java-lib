@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -419,6 +420,61 @@ public class ConfigObject implements Serializable {
 	}
 
 
+	@SuppressWarnings("unchecked")
+	private <T> void addToList(List<T> list, Object o) {
+		list.add((T) o);
+	}
+
+	/**
+	 * Populates all fields with the {@link ConfigurationOption} annotation of the given {@code targetObject} with values from this {@code ConfigObject} using reflection.
+	 * <p>
+	 * The name of the field is the key used in this {@code ConfigObject} to get the value.
+	 * If a value in this {@code ConfigObject} does not have the same (or similar) type of the corresponding field, a {@link ConfigurationException} is thrown.
+	 * If no value for an option is present in this {@code ConfigObject}, a {@link ConfigurationException} is thrown for {@linkplain ConfigurationOption#required() required} options; field
+	 * values of other options stay unchanged.
+	 * <p>
+	 * This method supports the following field type: all primitive types and their boxed types, {@code String}, {@link ConfigObject}, {@link ConfigArray}, {@link List}.
+	 *
+	 * @param targetObject The target object
+	 * @throws ConfigurationException If a value has the incorrect type, or the value of a required option is missing
+	 * @throws ConfigurationException If a reflective operation fails
+	 * @throws UnsupportedOperationException If a field type is unsupported
+	 * @since 2.10
+	 */
+	public void populateConfigurationOptions(Object targetObject){
+		try{
+			java.lang.reflect.Field[] fields = targetObject.getClass().getDeclaredFields();
+			for(java.lang.reflect.Field f : fields){
+				String name = f.getName();
+				ConfigurationOption opt = f.getAnnotation(ConfigurationOption.class);
+				if(opt == null)
+					continue;
+				if(this.containsKey(name)){
+					f.setAccessible(true);
+					if(f.getType() == List.class){
+						java.lang.reflect.ParameterizedType pt = (java.lang.reflect.ParameterizedType) f.getGenericType();
+						Class<?> genericType = (Class<?>) pt.getActualTypeArguments()[0];
+						ConfigArray array = this.getArray(name);
+						List<?> l = new java.util.ArrayList<>();
+						for(int i = 0; i < array.size(); i++){
+							Object o = convertObjectValue(array.get(i), genericType, name + "[" + i + "]");
+							this.addToList(l, o);
+						}
+						f.set(targetObject, l);
+					}else{
+						Object data = this.get(name);
+						Object value = convertObjectValue(data, f.getType(), name);
+						f.set(targetObject, value);
+					}
+				}else if(opt.required())
+					throw new ConfigurationException("Missing required option '" + name + "'");
+			}
+		}catch(ReflectiveOperationException e){
+			throw new ConfigurationException("Reflective operation failed", e);
+		}
+	}
+
+
 	/**
 	 * Determines whether the given object is equal to this {@code ConfigObject}.
 	 * <p>
@@ -456,6 +512,8 @@ public class ConfigObject implements Serializable {
 	 */
 	@Override
 	public String toString() {
+		if(this.isEmpty())
+			return "{}";
 		StringBuilder sb = new StringBuilder();
 		sb.append("{ ");
 		for(Map.Entry<String, Object> e : this.data.entrySet()){
@@ -468,5 +526,32 @@ public class ConfigObject implements Serializable {
 
 	private static String getTypeName(Object obj) {
 		return obj == null ? "null" : obj.getClass().getName();
+	}
+
+	private static Object convertObjectValue(Object obj, Class<?> type, String name){
+		try{
+			if(type == short.class || type == Short.class){
+				return ((Number) obj).shortValue();
+			}else if(type == int.class || type == Integer.class){
+				return ((Number) obj).intValue();
+			}else if(type == long.class || type == Long.class){
+				return ((Number) obj).longValue();
+			}else if(type == float.class || type == Float.class){
+				return ((Number) obj).floatValue();
+			}else if(type == double.class || type == Double.class){
+				return ((Number) obj).doubleValue();
+			}else if(type == boolean.class || type == Boolean.class){
+				return (boolean) obj;
+			}else if(type == String.class){
+				return String.valueOf(obj);
+			}else if(type == ConfigObject.class){
+				return (ConfigObject) obj;
+			}else if(type == ConfigArray.class){
+				return (ConfigArray) obj;
+			}else
+				throw new UnsupportedOperationException("Unsupported type '" + type + "'");
+		}catch(ClassCastException | NullPointerException e){
+			throw new ConfigurationException("Expected '" + type.getName() + "' for '" + name + "' but received value of type '" + getTypeName(obj) + "'");
+		}
 	}
 }

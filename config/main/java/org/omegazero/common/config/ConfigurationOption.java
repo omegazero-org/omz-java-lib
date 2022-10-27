@@ -27,4 +27,11 @@ public @interface ConfigurationOption {
 	 * A detailed description of this configuration option.
 	 */
 	String description() default "";
+
+	/**
+	 * Whether this configuration option is required.
+	 *
+	 * @since 2.10
+	 */
+	boolean required() default false;
 }

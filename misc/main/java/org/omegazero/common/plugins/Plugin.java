@@ -13,6 +13,7 @@ package org.omegazero.common.plugins;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -22,6 +23,8 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+import org.omegazero.common.config.ConfigObject;
+import org.omegazero.common.config.ConfigurationException;
 import org.omegazero.common.logging.Logger;
 import org.omegazero.common.logging.LoggerUtil;
 import org.omegazero.common.util.ArrayUtil;
@@ -176,6 +179,43 @@ public abstract class Plugin {
 	private void validateValue(String key, String value, String regex) {
 		if(!value.matches(regex))
 			throw new InvalidPluginException(this.getName(), "Illegal characters in '" + key + "' option");
+	}
+
+
+	/**
+	 * Applies the given {@code config} data to this plugin's object.
+	 * <p>
+	 * First, {@link ConfigObject#populateConfigurationOptions(Object)} is called on this plugin's main class instance.
+	 * Then, if a method with the {@link ExtendedPluginConfiguration} annotation and a single parameter of type {@link ConfigObject} is found, it is called with the given {@code config}.
+	 *
+	 * @param config The configuration data
+	 * @throws ConfigurationException If the {@code ExtendedPluginConfiguration} method threw an exception
+	 * @throws ConfigurationException If a value has the incorrect type, or the value of a required option is missing
+	 * @throws ConfigurationException If a reflective operation fails
+	 * @throws UnsupportedOperationException If a field type is unsupported
+	 * @since 2.10
+	 */
+	public void initPluginConfig(ConfigObject config){
+		config.populateConfigurationOptions(this.getMainClassInstance());
+		try{
+			Method configMethod = null;
+			Method[] methods = this.getMainClassType().getDeclaredMethods();
+			for(Method m : methods){
+				Class<?>[] mparams = m.getParameterTypes();
+				if(mparams.length == 1 && mparams[0] == ConfigObject.class && m.isAnnotationPresent(ExtendedPluginConfiguration.class)){
+					configMethod = m;
+					break;
+				}
+			}
+			if(configMethod != null){
+				configMethod.setAccessible(true);
+				configMethod.invoke(this.getMainClassInstance(), config);
+			}
+		}catch(java.lang.reflect.InvocationTargetException e){
+			throw new ConfigurationException("Configuration method threw an exception: " + e, e);
+		}catch(ReflectiveOperationException e){
+			throw new ConfigurationException("Reflective operation failed while calling configuration method", e);
+		}
 	}
 
 

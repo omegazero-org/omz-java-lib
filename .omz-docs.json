@@ -3,11 +3,10 @@
 	"targetName": "omz-java-lib",
 	"generatorOptions": {
 		"src": [
-			"common/main/java",
 			"config/main/java",
 			"events/main/java",
 			"logging/main/java",
-			"plugins/main/java",
+			"misc/main/java",
 			"util/main/java"
 		],
 		"packages": ["org"],

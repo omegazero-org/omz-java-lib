@@ -136,11 +136,11 @@ public final class LoggerUtil {
 		String[] str = fullName.split("\\.");
 		String label = str[str.length - 1];
 		new LUPermission("logger", "create", fullName).check();
-		return new Logger(fullName, label);
+		return new StandardLogger(fullName, label);
 	}
 
 	protected static Logger createLogger(Class<?> cl) {
-		return new Logger(cl.getName(), cl.getSimpleName());
+		return new StandardLogger(cl.getName(), cl.getSimpleName());
 	}
 
 

@@ -14,21 +14,44 @@ package org.omegazero.common.logging;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * An {@link OutputStream} for writing to a {@link Logger} instance at a given {@link LogLevel}.
+ *
+ * @since 2.1
+ */
 public class LoggerOutputStream extends OutputStream {
 
 	private final Logger loggerInstance;
+	private final LogLevel outputLevel;
 
 	private final int[] buf = new int[1024];
 	private int bufLen = 0;
 
-	protected LoggerOutputStream(String name) {
-		this.loggerInstance = new Logger(name);
+	/**
+	 * Creates a {@code LoggerOutputStream} with the given {@code Logger} instance and output {@code LogLevel}.
+	 *
+	 * @param loggerInstance The {@code Logger} instance
+	 * @param outputLevel The {@code LogLevel} to output log messages with
+	 * @since 2.10
+	 */
+	public LoggerOutputStream(Logger loggerInstance, LogLevel outputLevel) {
+		this.loggerInstance = loggerInstance;
+		this.outputLevel = outputLevel;
+	}
+
+	LoggerOutputStream(String name) {
+		this(new StandardLogger(name), LogLevel.INFO);
 	}
 
 
+	/**
+	 * Writes the data stored in the internal buffer as a log message to the {@code Logger} and with the {@code LogLevel} given in the constructor.
+	 */
 	public synchronized void writeOut() {
-		String text = new String(this.buf, 0, this.bufLen);
-		this.loggerInstance.info(text);
+		if(this.loggerInstance.isLogging(this.outputLevel)){
+			String text = new String(this.buf, 0, this.bufLen);
+			this.loggerInstance.log(this.outputLevel, new Object[] { text });
+		}
 		this.bufLen = 0;
 	}
 

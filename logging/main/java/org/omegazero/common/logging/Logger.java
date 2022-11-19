@@ -13,7 +13,7 @@ package org.omegazero.common.logging;
  * For example, the "debug" log level should be used for log messages useful for basic debugging by an application developer or user with advanced knowledge of the application, while "error"
  * should be used for any messages that may require intervention by any user.
  * <p>
- * TODO: log outputs
+ * Generated log messages are written to any number of configured {@link LoggerOutput}s.
  *
  * @since 2.1
  */

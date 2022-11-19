@@ -60,8 +60,7 @@ public final class StandardLogger implements Logger {
 		LoggerUtil.logToListeners(level, s);
 		if(!logEnabled)
 			return;
-		LoggerUtil.logToStdout(level.color() + s + "\u001b[0m");
-		LoggerUtil.addLogToBuffer(s);
+		LoggerUtil.newLogMessage(s, level.color());
 	}
 
 

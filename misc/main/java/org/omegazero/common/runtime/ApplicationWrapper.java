@@ -200,6 +200,7 @@ public class ApplicationWrapper {
 
 		private static final boolean exitOnDoubleFault = PropertyUtil.getBoolean("org.omegazero.common.runtime.exitOnDoubleFault", true);
 		private static final byte[] vmerrMsg = "Virtual Machine Error\n".getBytes();
+		private static final byte[] oomMsg = "Out Of Memory\n".getBytes();
 		private static final byte[] dfMsg = "Uncaught error in exception handler\n".getBytes();
 
 
@@ -222,6 +223,9 @@ public class ApplicationWrapper {
 			try{
 				System.setErr(LoggerUtil.sysErr);
 				err.printStackTrace();
+			}catch(OutOfMemoryError e){
+				for(int i = 0; i < oomMsg.length; i++)
+					LoggerUtil.sysOut.write(oomMsg[i]);
 			}catch(Throwable e){
 				for(int i = 0; i < vmerrMsg.length; i++)
 					LoggerUtil.sysOut.write(vmerrMsg[i]);

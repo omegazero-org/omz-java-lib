@@ -29,7 +29,7 @@ public final class StandardLogger implements Logger {
 		this(creator.getName(), creator.getSimpleName());
 	}
 
-	public StandardLogger(String fullClassName, String label) {
+	StandardLogger(String fullClassName, String label) {
 		this.fullClassName = fullClassName;
 		this.label = label;
 	}

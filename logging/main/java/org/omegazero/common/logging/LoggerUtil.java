@@ -45,7 +45,13 @@ public final class LoggerUtil {
 
 	private static List<LoggerOutput> outputs = new ArrayList<>();
 
+	/**
+	 * The initial value of {@link System#out}.
+	 */
 	public static final PrintStream sysOut = System.out;
+	/**
+	 * The initial value of {@link System#err}.
+	 */
 	public static final PrintStream sysErr = System.err;
 
 	private LoggerUtil() {
@@ -56,13 +62,13 @@ public final class LoggerUtil {
 	 * Initializes the logger, setting the maximum log level to <b>level</b> and the log file name, where log messages will be saved to.
 	 * <p>
 	 * To reduce disk writes and increase logging speed, by default, log messages will only be saved every 5 minutes, if the logger buffer is full or when
-	 * {@link LoggerUtil#close()} is called. This may be disabled using {@link LoggerUtil#setSyncFlush(boolean)} by setting it to <b>true</b>.
+	 * {@link LoggerUtil#close()} is called. This may be disabled using {@link LoggerUtil#setSyncFlush(boolean)} by setting it to {@code true}.
 	 * The log buffer may be flushed explicitly using {@link LoggerUtil#flushLogBuffer()}. The save interval may be changed using the
 	 * <code>org.omegazero.common.logging.saveInterval</code> system property by setting it to a number representing the time in seconds before this class is used.
 	 *
-	 * @param level The maximum log level for log messages. Log messages higher than this will be omitted. May be <b>null</b>, in which case it will be set to
+	 * @param level The maximum log level for log messages. Log messages higher than this will be omitted. May be {@code null}, in which case it will be set to
 	 *              {@link LogLevel#INFO}
-	 * @param file  The file name to save log messages to. May be <b>null</b> to disable disk saving
+	 * @param file  The file name to save log messages to. May be {@code null} to disable disk saving
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 */
 	public static void init(LogLevel level, String file) {
@@ -347,7 +353,7 @@ public final class LoggerUtil {
 
 
 	/**
-	 * If set to <b>true</b>, all log messages created using a {@link StandardLogger} will be printed to the default <code>System.err</code> instead of the default
+	 * If set to {@code true}, all log messages created using a {@link StandardLogger} will be printed to the default <code>System.err</code> instead of the default
 	 * <code>System.out</code>. Set the output stream where all log messages using a {@link StandardLogger} will be printed to.
 	 *
 	 * @param u If loggers should use <code>stderr</code> for log messages
@@ -367,7 +373,7 @@ public final class LoggerUtil {
 	 * @param syncFlush {@code true} to synchronously flush the log buffer
 	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
 	 * @deprecated Since 2.10, use
-			<code>{@link #getLoggerOutputByType(Class) getLoggerOutputByType}({@link FileLoggerOutput}.class).{@link FileLoggerOutput#setSyncFlush setSyncFlush}(u)</code> instead
+			<code>{@link #getLoggerOutputByType(Class) getLoggerOutputByType}({@link FileLoggerOutput}.class).{@link FileLoggerOutput#setSyncFlush setSyncFlush}(syncFlush)</code> instead
 	 */
 	@Deprecated
 	public static void setSyncFlush(boolean syncFlush) {
@@ -383,7 +389,7 @@ public final class LoggerUtil {
 	 * @return The configured log file, or {@code null} if no log file is used
 	 * @since 2.5
 	 * @deprecated Since 2.10, use
-			<code>{@link #getLoggerOutputByType(Class) getLoggerOutputByType}({@link FileLoggerOutput}.class).{@link FileLoggerOutput#getLogFile getLogFile}(u)</code> instead
+			<code>{@link #getLoggerOutputByType(Class) getLoggerOutputByType}({@link FileLoggerOutput}.class).{@link FileLoggerOutput#getLogFile getLogFile}()</code> instead
 	 */
 	@Deprecated
 	public static String getLogFile() {

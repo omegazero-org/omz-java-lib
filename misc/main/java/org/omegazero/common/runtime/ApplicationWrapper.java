@@ -153,7 +153,7 @@ public class ApplicationWrapper {
 
 			logger.info("Shutting down");
 
-			Tasks.timeout(ApplicationWrapper::shutdownTimeout, shutdownTimeout).daemon();
+			Tasks.I.timeout(ApplicationWrapper::shutdownTimeout, shutdownTimeout).daemon();
 
 			app.close();
 

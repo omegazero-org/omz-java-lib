@@ -35,7 +35,7 @@ public class FileLoggerOutput implements LoggerOutput {
 
 	public FileLoggerOutput(String logFile){
 		this.logFile = Objects.requireNonNull(logFile);
-		Tasks.interval((args) -> {
+		Tasks.I.interval((args) -> {
 			this.flush();
 		}, SAVE_INTERVAL).daemon();
 	}

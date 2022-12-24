@@ -205,8 +205,11 @@ public class EventBus {
 
 				@Override
 				public int compare(Subscriber s1, Subscriber s2) {
-					return s2.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class).priority().value()
-							- s1.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class).priority().value();
+					SubscribeEvent s1a = s1.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class);
+					SubscribeEvent s2a = s2.getListenerMethodForEvent(event).getAnnotation(SubscribeEvent.class);
+					int s1p = s1a.priorityNum() != SubscribeEvent.Priority.NORMAL.value() ? s1a.priorityNum() : s1a.priority().value();
+					int s2p = s2a.priorityNum() != SubscribeEvent.Priority.NORMAL.value() ? s2a.priorityNum() : s2a.priority().value();
+					return s2p - s1p;
 				}
 			});
 			this.eventCache.put(event.getEventSignature(), subs);

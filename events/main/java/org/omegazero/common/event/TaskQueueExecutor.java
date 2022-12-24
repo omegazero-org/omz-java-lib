@@ -329,7 +329,7 @@ public class TaskQueueExecutor {
 	 * Returns the current number of worker threads.
 	 * 
 	 * @return The number of active worker threads
-	 * @see #getMaxThreads()
+	 * @see #getMaxWorkerThreadCount()
 	 */
 	public int getWorkerThreadCount() {
 		return this.workerThreads.size();

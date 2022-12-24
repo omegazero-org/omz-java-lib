@@ -20,12 +20,12 @@ public class ReflectTask extends AbstractTask {
 	private final Object callerInstance;
 
 	/**
-	 * Creates a new {@link ReflectTask}.
+	 * Creates a new {@code ReflectTask}.
 	 * 
 	 * @param method         The task handler method
 	 * @param callerInstance The instance to call the method with. May be <code>null</code> if the method is static
 	 * @param args           The arguments to pass to the task handler when this task is executed
-	 * @see Task#Task(Object[])
+	 * @see AbstractTask#AbstractTask(Object[])
 	 */
 	public ReflectTask(Method method, Object callerInstance, Object[] args) {
 		super(args);
@@ -34,13 +34,13 @@ public class ReflectTask extends AbstractTask {
 	}
 
 	/**
-	 * Creates a new {@link ReflectTask}.
+	 * Creates a new {@code ReflectTask}.
 	 * 
 	 * @param method         The task handler method
 	 * @param callerInstance The instance to call the method with. May be <code>null</code> if the method is static
 	 * @param args           The arguments to pass to the task handler when this task is executed
 	 * @param priority       The priority of this task
-	 * @see Task#Task(Object[], int)
+	 * @see AbstractTask#AbstractTask(Object[], int)
 	 */
 	public ReflectTask(Method method, Object callerInstance, Object[] args, int priority) {
 		super(args, priority);
@@ -54,10 +54,20 @@ public class ReflectTask extends AbstractTask {
 		this.method.invoke(this.callerInstance, args);
 	}
 
+	/**
+	 * Returns the task method passed in the constructor.
+	 *
+	 * @return The method instance
+	 */
 	public Method getMethod() {
 		return this.method;
 	}
 
+	/**
+	 * Returns the callee instance passed in the constructor.
+	 *
+	 * @return The instance object
+	 */
 	public Object getCallerInstance() {
 		return this.callerInstance;
 	}

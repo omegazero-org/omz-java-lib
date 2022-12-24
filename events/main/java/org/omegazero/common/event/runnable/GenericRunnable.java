@@ -29,6 +29,12 @@ public interface GenericRunnable {
 	public int getArgumentCount();
 
 
+	/**
+	 * Checks whether {@code count} is the correct number of arguments for this {@code GenericRunnable}.
+	 *
+	 * @param count
+	 * @throws IllegalArgumentException If {@code count} does not match the value returned by {@link #getArgumentCount()}
+	 */
 	public default void checkArgc(int count){
 		if(count != this.getArgumentCount())
 			throw new IllegalArgumentException("Incorrect number of arguments (runnable has: " + this.getArgumentCount() + ", got: " + count + ")");

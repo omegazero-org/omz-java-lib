@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 import org.omegazero.common.event.task.LambdaTask;
 
 /**
- * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's <tt>setTimeout</tt> and <tt>setInterval</tt>.
+ * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's {@code setTimeout} and {@code setInterval}.
  * <p>
  * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses an {@link EventQueueExecutor}.
  * <p>
@@ -309,8 +309,8 @@ public class TaskScheduler {
 
 	/**
 	 * Exits this <b>TaskScheduler</b> by running any remaining tasks (also waiting for ones that are to be run in the future and non-daemon) and exiting the worker
-	 * threads.<br>
-	 * <br>
+	 * threads.
+	 * <p>
 	 * If <b>blocking</b> is <code>true</code>, the caller thread is blocked until all remaining non-daemon tasks are run and all worker threads have exited; otherwise, the
 	 * shutdown procedure is run by a separate thread.
 	 * 
@@ -342,8 +342,8 @@ public class TaskScheduler {
 
 	/**
 	 * Sets the error handler that will be called when an error occurs while queuing a task. Also sets the error handler of this <code>TaskScheduler</code>'s
-	 * {@link TaskQueueExecutor}.<br>
-	 * <br>
+	 * {@link TaskQueueExecutor}.
+	 * <p>
 	 * If an error occurs while queuing a task and no handler is set, the error is {@linkplain Throwable#printStackTrace() printed to <code>stderr</code>}. For default
 	 * behavior when an error occurs while running a task, see {@link TaskQueueExecutor#setErrorHandler(Consumer)}.
 	 * 
@@ -369,7 +369,7 @@ public class TaskScheduler {
 		private boolean daemon;
 		private boolean canceled = false;
 
-		protected TimerTask(long id, Consumer<Object[]> handler, long time, long period, Object[] args) {
+		private TimerTask(long id, Consumer<Object[]> handler, long time, long period, Object[] args) {
 			super(handler, args);
 			this.id = id;
 			this.time = time;

@@ -20,11 +20,11 @@ public class LambdaTask extends AbstractTask {
 	private Consumer<Object[]> handler;
 
 	/**
-	 * Creates a new {@link LambdaTask}.
+	 * Creates a new {@code LambdaTask}.
 	 * 
 	 * @param handler The task handler
 	 * @param args    The arguments to pass to the task handler when this task is executed
-	 * @see Task#Task(Object[])
+	 * @see AbstractTask#AbstractTask(Object[])
 	 */
 	public LambdaTask(Consumer<Object[]> handler, Object[] args) {
 		super(args);
@@ -32,12 +32,12 @@ public class LambdaTask extends AbstractTask {
 	}
 
 	/**
-	 * Creates a new {@link LambdaTask}.
+	 * Creates a new {@code LambdaTask}.
 	 * 
 	 * @param handler  The task handler
 	 * @param args     The arguments to pass to the task handler when this task is executed
 	 * @param priority The priority of this task
-	 * @see Task#Task(Object[], int)
+	 * @see AbstractTask#AbstractTask(Object[], int)
 	 */
 	public LambdaTask(Consumer<Object[]> handler, Object[] args, int priority) {
 		super(args, priority);

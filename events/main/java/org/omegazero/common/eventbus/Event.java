@@ -35,8 +35,8 @@ public class Event {
 
 
 	/**
-	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}<br>
-	 * <br>
+	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}
+	 * <p>
 	 * The event defaults to being non-cancelable and configured to not collect all return values from subscribers (<b>includeAllReturns</b> is <code>false</code>). The
 	 * default return type is <code>void</code>.
 	 * 
@@ -48,8 +48,8 @@ public class Event {
 	}
 
 	/**
-	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}<br>
-	 * <br>
+	 * See {@link Event#Event(String, boolean, Class[], Class, boolean)}
+	 * <p>
 	 * The event defaults to being non-cancelable and configured to not collect all return values from subscribers (<b>includeAllReturns</b> is <code>false</code>).
 	 * 
 	 * @param methodName The name of the method that should be called when this event occurs
@@ -81,8 +81,8 @@ public class Event {
 
 
 	/**
-	 * Returns the method name of this event, which is the name of the method that is called when this event occurs.<br>
-	 * <br>
+	 * Returns the method name of this event, which is the name of the method that is called when this event occurs.
+	 * <p>
 	 * Further details are usage-defined.
 	 * 
 	 * @return The method name of this event
@@ -160,8 +160,8 @@ public class Event {
 	}
 
 	/**
-	 * Cancels this event. An event may only be canceled if it is explicitly {@linkplain #isCancelable() cancelable}.<br>
-	 * <br>
+	 * Cancels this event. An event may only be canceled if it is explicitly {@linkplain #isCancelable() cancelable}.
+	 * <p>
 	 * A call to this method is equivalent to a call to
 	 * 
 	 * <pre>
@@ -194,6 +194,15 @@ public class Event {
 	}
 
 
+	/**
+	 * Creates a string containing unambiguous information about the given {@code params}, {@code returnType} and name of a method.
+	 *
+	 * @param methodName A method name
+	 * @param params The parameters of the method
+	 * @param returnType The return type
+	 * @return The string
+	 * @see ReflectionUtil#getMethodSignature(Class, Class[])
+	 */
 	public static String createEventSignature(String methodName, Class<?>[] params, Class<?> returnType) {
 		return ReflectionUtil.getMethodSignature(returnType, params) + " " + methodName;
 	}

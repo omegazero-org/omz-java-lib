@@ -268,6 +268,7 @@ public class EventEmitter {
 	/**
 	 * Returns the number of event listeners registered for the given event {@code name}.
 	 *
+	 * @param name The event name
 	 * @return The number of listeners
 	 */
 	public synchronized int getEventListenerCount(String name){
@@ -288,6 +289,7 @@ public class EventEmitter {
 	/**
 	 * Returns an unmodifiable list of the event listeners registered for the given event {@code name}.
 	 *
+	 * @param name The event name
 	 * @return The list of event listeners
 	 */
 	public synchronized List<GenericRunnable> getEventListeners(String name){
@@ -298,6 +300,7 @@ public class EventEmitter {
 	/**
 	 * Returns {@code true} if the given event {@code name} is a known event.
 	 *
+	 * @param name The event name
 	 * @return {@code true} if the given event {@code name} is a known event
 	 * @see #getEventNames()
 	 */

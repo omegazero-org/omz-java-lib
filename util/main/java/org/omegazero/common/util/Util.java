@@ -73,7 +73,7 @@ public final class Util {
 
 
 	/**
-	 * Adds a shutdown hook which runs the given <tt>Runnable</tt>.
+	 * Adds a shutdown hook which runs the given {@code Runnable}.
 	 * 
 	 * @param handler The handler to run when the runtime is about to exit
 	 * @see Util#onClose(Runnable, boolean)
@@ -83,7 +83,7 @@ public final class Util {
 	}
 
 	/**
-	 * Adds a shutdown hook which runs the given <tt>Runnable</tt>.
+	 * Adds a shutdown hook which runs the given {@code Runnable}.
 	 * 
 	 * @param handler          The handler to run when the runtime is about to exit
 	 * @param waitForNonDaemon If <b>true</b> and the shutdown was triggered, <b>handler</b> will only be run if all other non-daemon threads have exited
@@ -136,8 +136,8 @@ public final class Util {
 
 	/**
 	 * Blocks this thread until all non-daemon threads apart from the caller and "DestroyJavaVM" thread have exited ({@link Util#nonDaemonThreadRunning()} returns <b>false</b>), or
-	 * at least <b>timeout</b> milliseconds have passed.<br>
-	 * <br>
+	 * at least <b>timeout</b> milliseconds have passed.
+	 * <p>
 	 * If the caller thread is interrupted while waiting, this method returns.
 	 * 
 	 * @param timeout Maximum amount of time to wait for non-daemon threads to exit, in milliseconds. May be 0 to wait for an unlimited amount of time

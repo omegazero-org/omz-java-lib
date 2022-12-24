@@ -33,8 +33,8 @@ public class Subscriber {
 	private final Map<String, Method> methodCache = new HashMap<>();
 
 	/**
-	 * Alias for {@link #Subscriber(Class, Object)}.<br>
-	 * <br>
+	 * Alias for {@link #Subscriber(Class, Object)}.
+	 * <p>
 	 * The <b>type</b> parameter is derived from the given <b>instance</b> parameter.
 	 * 
 	 * @param instance The subscriber instance
@@ -44,10 +44,10 @@ public class Subscriber {
 	}
 
 	/**
-	 * Creates an <code>Subscriber</code> instance for use with the {@link EventBus}.<br>
-	 * <br>
-	 * The class <b>type</b> must have the annotation {@link EventBusSubscriber} set.<br>
-	 * <br>
+	 * Creates an <code>Subscriber</code> instance for use with the {@link EventBus}.
+	 * <p>
+	 * The class <b>type</b> must have the annotation {@link EventBusSubscriber} set.
+	 * <p>
 	 * Only static event listener methods can be called when using this constructor. To be able to use non-static methods, pass an instance with
 	 * {@link #Subscriber(Class, Object)} or {@link #Subscriber(Object)}.
 	 * 
@@ -58,10 +58,10 @@ public class Subscriber {
 	}
 
 	/**
-	 * Creates an <code>Subscriber</code> instance for use with the {@link EventBus}.<br>
-	 * <br>
-	 * The class <b>type</b> must have the annotation {@link EventBusSubscriber} set.<br>
-	 * <br>
+	 * Creates an <code>Subscriber</code> instance for use with the {@link EventBus}.
+	 * <p>
+	 * The class <b>type</b> must have the annotation {@link EventBusSubscriber} set.
+	 * <p>
 	 * The object given in <b>instance</b> will be the instance the method is called with.
 	 * 
 	 * @param type     The class of the subscriber
@@ -88,8 +88,8 @@ public class Subscriber {
 	}
 
 	/**
-	 * Searches the valid event listener method suitable for the given <b>event</b>.<br>
-	 * <br>
+	 * Searches the valid event listener method suitable for the given <b>event</b>.
+	 * <p>
 	 * The result of this method will be cached, including when a method was not found.
 	 * 
 	 * @param event The event to find a suitable method for
@@ -111,12 +111,13 @@ public class Subscriber {
 
 
 	/**
-	 * Searches the valid event listener method with the given <b>name</b> and <b>parameterTypes</b>. Returns <code>null</code> if a suitable method was not found.<br>
-	 * <br>
+	 * Searches the valid event listener method with the given <b>name</b> and <b>parameterTypes</b>. Returns <code>null</code> if a suitable method was not found.
+	 * <p>
 	 * The result of this method will be cached, including when a method was not found.
 	 * 
 	 * @param name           The name of the method to be searched
 	 * @param parameterTypes An array of parameter types the method should have
+	 * @param returnType The return type of the method. Void methods always match
 	 * @return The valid event listener method, or <code>null</code> if the method was not found
 	 */
 	public Method getListenerMethod(String name, Class<?>[] parameterTypes, Class<?> returnType) {
@@ -199,14 +200,15 @@ public class Subscriber {
 
 
 	/**
-	 * Gets the event handler method for the passed <b>event</b> and invokes it with the given arguments.<br>
-	 * <br>
+	 * Gets the event handler method for the passed <b>event</b> and invokes it with the given arguments.
+	 * <p>
 	 * A handler method must have the annotation {@link SubscribeEvent} with the optional {@link SubscribeEvent#priority()} argument.
 	 * 
 	 * @param event The event to be dispatched to the event bus subscriber
 	 * @param args  Arguments to be passed to the event method
+	 * @return The value returned by the event method
 	 * @throws ReflectiveOperationException If a reflection operation fails
-	 * @see {@link EventBus#dispatchEvent(Event, Object...)}
+	 * @see EventBus#dispatchEvent(Event, Object...)
 	 */
 	public Object runEvent(Event event, Object... args) throws ReflectiveOperationException {
 		Method m = this.getListenerMethodForEvent(event);
@@ -216,12 +218,13 @@ public class Subscriber {
 	}
 
 	/**
-	 * Validates and invokes the method <b>eventListener</b> with the given arguments.<br>
-	 * <br>
+	 * Validates and invokes the method <b>eventListener</b> with the given arguments.
+	 * <p>
 	 * <b>eventListener</b> must be a valid event listener. See {@link Subscriber#runEvent(Event, Object...)}.
 	 * 
 	 * @param eventListener A valid event listener method
 	 * @param args          Arguments to be passed to the event method
+	 * @return The value returned by the event method
 	 * @throws ReflectiveOperationException If a reflection operation fails
 	 */
 	public Object runEventMethod(Method eventListener, Object... args) throws ReflectiveOperationException {

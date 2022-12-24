@@ -26,11 +26,15 @@ import java.lang.annotation.Target;
 public @interface SubscribeEvent {
 
 	/**
-	 * The value of the optional priority parameter.<br>
-	 * The default value is <i>NORMAL</i>.
+	 * The value of the optional priority parameter. Default: {@link Priority#NORMAL}.
+	 *
+	 * @return The priority
 	 */
 	Priority priority() default Priority.NORMAL;
 
+	/**
+	 * Contains priority values for {@link SubscribeEvent#priority()}.
+	 */
 	public enum Priority {
 		LOWEST(0), LOW(536870911), NORMAL(1073741823), HIGH(1610612735), HIGHEST(2147483647);
 
@@ -40,7 +44,12 @@ public @interface SubscribeEvent {
 			this.value = value;
 		}
 
-		public int value() {
+		/**
+		 * The {@code int} value of this {@code Priority} value.
+		 *
+		 * @return The numeric value
+		 */
+		public int value(){
 			return this.value;
 		}
 	}

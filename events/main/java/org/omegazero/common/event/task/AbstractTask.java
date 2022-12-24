@@ -19,7 +19,7 @@ public abstract class AbstractTask implements Task {
 	private final int priority;
 
 	/**
-	 * Creates a new {@link Task} with priority <code>0</code>.
+	 * Creates a new {@code AbstractTask} with priority <code>0</code>.
 	 * 
 	 * @param args The arguments to pass to the task handler when this task is executed
 	 */
@@ -28,7 +28,7 @@ public abstract class AbstractTask implements Task {
 	}
 
 	/**
-	 * Creates a new {@link Task}.
+	 * Creates a new {@code AbstractTask}.
 	 * 
 	 * @param args The arguments to pass to the task handler when this task is executed
 	 * @param priority The priority of this task. Tasks with a lower priority number will be executed first
@@ -49,7 +49,7 @@ public abstract class AbstractTask implements Task {
 
 
 	/**
-	 * Runs this {@link Task}. Exact behavior is implementation-defined.
+	 * Runs this {@code AbstractTask}. Exact behavior is implementation-defined.
 	 * <p>
 	 * General behavior includes running a task handler (for example a method) with the arguments passed in the constructor.
 	 * 

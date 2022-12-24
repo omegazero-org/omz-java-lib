@@ -24,11 +24,10 @@ public abstract class Args implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The argument data.
+	 */
 	protected final Map<String, Object> arguments = new HashMap<>();
-
-	@Deprecated
-	public Args() {
-	}
 
 
 	/**

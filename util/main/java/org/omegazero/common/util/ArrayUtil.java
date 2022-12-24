@@ -398,7 +398,7 @@ public final class ArrayUtil {
 	 * A call to this method is equivalent to a call to
 	 * 
 	 * <pre>
-	 * <code>{@link #indexOf(T[], T, int, int) indexOf}(array, b, 0, array.length)</code>
+	 * <code>{@link #indexOf(Object[], Object, int, int) indexOf}(array, b, 0, array.length)</code>
 	 * </pre>
 	 * 
 	 * @param <T> The element type
@@ -424,7 +424,7 @@ public final class ArrayUtil {
 	 * @return The index of the found element, or {@code -1} if it was not found
 	 * @throws IndexOutOfBoundsException If <b>offset</b> is negative or if the end index of the search would exceed the length of the array
 	 * @since 2.8
-	 * @see #indexOf(T[], T)
+	 * @see #indexOf(Object[], Object)
 	 */
 	public static <T> int indexOf(T[] array, T e, int offset, int length) {
 		checkBounds(array, offset, length);
@@ -551,6 +551,7 @@ public final class ArrayUtil {
 	/**
 	 * Checks whether <b>offset</b> and <b>length</b> specify a valid set of elements in the <b>array</b>.
 	 * 
+	 * @param <T> The element type
 	 * @param array The array
 	 * @param offset The start index
 	 * @param length The number of required valid indices starting at <b>offset</b>

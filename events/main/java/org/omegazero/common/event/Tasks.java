@@ -93,7 +93,7 @@ public final class Tasks {
 	 * See {@link TaskScheduler#interval(Consumer, long, Object...)}.
 	 * 
 	 * @param handler The handler
-	 * @param timeout The interval in milliseconds
+	 * @param interval The interval in milliseconds
 	 * @param args    Handler arguments
 	 * @return The {@link TimerTask} instance
 	 * @since 2.1

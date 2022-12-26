@@ -20,9 +20,11 @@ import org.omegazero.common.event.task.LambdaTask;
 /**
  * Provides functions for time-based scheduling, running functions either once or periodically, similar to JavaScript's {@code setTimeout} and {@code setInterval}.
  * <p>
- * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses an {@link EventQueueExecutor}.
+ * Tasks are run in a separate background thread. Multiple tasks may run concurrently. This implementation uses a {@link TaskQueueExecutor}.
  * <p>
  * Timing may be inaccurate, depending on the platform. The implementation uses {@link Object#wait(long)}.
+ * <p>
+ * This class is thread-safe.
  * 
  * @since 2.1
  */
@@ -32,7 +34,7 @@ public class TaskScheduler {
 
 	private long idCounter = 0;
 
-	private TaskQueueExecutor executor = TaskQueueExecutor.fromSequential().name("TaskScheduler").workerThreads(-1).build();
+	private TaskQueueExecutor executor = TaskQueueExecutor.fromSequential().name("TaskScheduler").workerThreads(-2).build();
 
 	private Consumer<Throwable> errorHandler;
 
@@ -279,8 +281,9 @@ public class TaskScheduler {
 
 
 	/**
+	 * Returns {@code true} if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks.
 	 * 
-	 * @return <b>true</b> if all queued tasks are marked as daemon using {@link TimerTask#daemon()} or if there are no queued tasks
+	 * @return {@code true} if all tasks are daemon tasks
 	 * @since 2.1
 	 */
 	public boolean isAllDaemon() {

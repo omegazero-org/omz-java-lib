@@ -131,6 +131,34 @@ public final class Tasks {
 	}
 
 	/**
+	 * Queues the given {@code Runnable} to be run asychronously, as soon as possible.
+	 * <p>
+	 * This method calls {@link TaskScheduler#timeout(Runnable, long)} with a timeout value of {@code 0}. Usage of this method should be kept at a minimum, since the worker threads executing
+	 * handlers passed to this method are shared with other timer tasks. For more resource- or IO-intensive tasks, a dedicated {@code TaskQueueExecutor} should be used instead.
+	 *
+	 * @param handler The handler
+	 * @since 2.11.0
+	 * @see #async(Consumer, Object...)
+	 */
+	public static void async(Runnable handler){
+		I.timeout(handler, 0);
+	}
+
+	/**
+	 * Queues the given {@code Consumer} with the given arguments to be run asychronously, as soon as possible.
+	 * <p>
+	 * See {@link #async(Runnable)} for usage hints regarding the {@code async} methods.
+	 *
+	 * @param handler The handler
+	 * @param args Arguments to be passed to the handler
+	 * @since 2.11.0
+	 * @see #async(Runnable)
+	 */
+	public static void async(Consumer<Object[]> handler, Object... args){
+		I.timeout(handler, 0);
+	}
+
+	/**
 	 * See {@link TaskScheduler#exit()}. Called with {@link #I}.
 	 */
 	public static void exit() {

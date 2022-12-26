@@ -27,6 +27,8 @@ import org.omegazero.common.event.task.Task;
  * Generally, if no {@link Handle} is used, no guarantee is made about the order in which tasks with the same priority will be executed, as this is also dependent on the backing
  * queue. However, if the backing queue guarantees insertion order for equal priority tasks, and a single worker thread is used, these tasks will be processed in the order in which
  * they were queued.
+ * <p>
+ * This class is thread-safe.
  * 
  * @since 2.6
  */
@@ -381,8 +383,9 @@ public class TaskQueueExecutor {
 
 
 		/**
-		 * Sets the maximum number of worker threads allowed for the {@link TaskQueueExecutor}. This method may be called with a value of <code>-1</code> to set the maximum number
-		 * to the number of processors available.
+		 * Sets the maximum number of worker threads allowed for the {@link TaskQueueExecutor}. This method may be called with a negative value to set the maximum number to
+		 * its absolute value or the {@linkplain Runtime#availableProcessors() number of processors available}, whichever is greater.
+		 * For example, passing {@code -2} sets the maximum number of worker threads to {@code 2}, or the number of processors if there are more than 2.
 		 * <p>
 		 * The default value is <code>1</code>.
 		 * 
@@ -391,7 +394,7 @@ public class TaskQueueExecutor {
 		 */
 		public Builder workerThreads(int maxWorkerThreadCount) {
 			if(maxWorkerThreadCount < 0)
-				this.maxWorkerThreadCount = Runtime.getRuntime().availableProcessors();
+				this.maxWorkerThreadCount = Math.max(Runtime.getRuntime().availableProcessors(), -maxWorkerThreadCount);
 			else
 				this.maxWorkerThreadCount = maxWorkerThreadCount;
 			return this;

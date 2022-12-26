@@ -40,9 +40,17 @@ public interface AttachmentContainer {
 	 * 
 	 * @param key The name of the attachment
 	 * @return The value of the attachment
+	 * @throws NoSuchElementException If no attachment with the given <b>key</b> exists
 	 * @see #hasAttachment(String)
+	 * @implNote The default implementation of this method (added in 2.11.0) checks {@code getAttachment(key) != null}
 	 */
-	public Object requireAttachment(String key);
+	public default Object requireAttachment(String key){
+		Object v = this.getAttachment(key);
+		if(v != null)
+			return v;
+		else
+			throw new java.util.NoSuchElementException("No attribute named '" + key + "'");
+	}
 
 	/**
 	 * Determines whether an attachment identified by the given <b>key</b> exists.
@@ -50,14 +58,22 @@ public interface AttachmentContainer {
 	 * @param key The name of the attachment
 	 * @return {@code true} if an attachment with the given <b>key</b> exists
 	 * @see #requireAttachment(String)
+	 * @implNote The default implementation of this method (added in 2.11.0) checks {@code getAttachment(key) != null}
 	 */
-	public boolean hasAttachment(String key);
+	public default boolean hasAttachment(String key){
+		return this.getAttachment(key) != null;
+	}
 
 	/**
 	 * Removes an attachment identified by the given <b>key</b> and returns it.
 	 * 
 	 * @param key The name of the attachment
 	 * @return The value of the attachment, or {@code null} if no attachment with the given <b>key</b> existed
+	 * @implNote The default implementation of this method (added in 2.11.0) calls {@code getAttachment(key)} to get the previous value and then {@code setAttachment(key, null)}
 	 */
-	public Object removeAttachment(String key);
+	public default Object removeAttachment(String key){
+		Object v = this.getAttachment(key);
+		this.setAttachment(key, null);
+		return v;
+	}
 }

@@ -45,15 +45,6 @@ public class SimpleAttachmentContainer implements AttachmentContainer {
 	}
 
 	@Override
-	public Object requireAttachment(String key) {
-		Object v = this.getAttachment(key);
-		if(v != null)
-			return v;
-		else
-			throw new NoSuchElementException("No attribute named '" + key + "'");
-	}
-
-	@Override
 	public boolean hasAttachment(String key) {
 		return this.attachments != null && this.attachments.containsKey(key);
 	}

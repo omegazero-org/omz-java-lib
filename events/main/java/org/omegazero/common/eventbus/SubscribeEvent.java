@@ -37,7 +37,7 @@ public @interface SubscribeEvent {
 	 * it takes precendence over {@link #priority()}; otherwise, the numeric value of {@link #priority()} is used.
 	 *
 	 * @return The custom numeric priority
-	 * @since 2.10.1
+	 * @since 2.11.0
 	 */
 	int priorityNum() default 1073741823;
 

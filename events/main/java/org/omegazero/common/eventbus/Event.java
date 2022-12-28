@@ -204,6 +204,6 @@ public class Event {
 	 * @see ReflectionUtil#getMethodSignature(Class, Class[])
 	 */
 	public static String createEventSignature(String methodName, Class<?>[] params, Class<?> returnType) {
-		return ReflectionUtil.getMethodSignature(returnType, params) + " " + methodName;
+		return methodName + ReflectionUtil.getMethodSignature(returnType, params);
 	}
 }

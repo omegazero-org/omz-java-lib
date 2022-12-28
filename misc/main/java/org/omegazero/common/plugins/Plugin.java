@@ -14,6 +14,7 @@ package org.omegazero.common.plugins;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -293,8 +294,16 @@ public abstract class Plugin {
 	}
 
 
-	private static String getFileBaseName(String path) {
+	private static String getFileBaseName(String path){
 		return path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
+	}
+
+	private static URL pathToUrl(Path path){
+		try{
+			return path.toUri().toURL();
+		}catch(IOException e){
+			return null;
+		}
 	}
 
 
@@ -319,11 +328,12 @@ public abstract class Plugin {
 
 	static class DirectoryPlugin extends Plugin {
 
-
+		private final URL sourceURL;
 		private final Path rootPath;
 
 		public DirectoryPlugin(Path path, PluginClassLoader classLoader) {
 			super(path.toAbsolutePath().toString(), classLoader);
+			this.sourceURL = pathToUrl(path);
 			this.rootPath = path;
 		}
 
@@ -336,21 +346,22 @@ public abstract class Plugin {
 			}catch(IOException e){
 				return null;
 			}
-			return new LoadedClassFile(ArrayUtil.readInputStreamToByteArray(fis), null, null);
+			return new LoadedClassFile(ArrayUtil.readInputStreamToByteArray(fis), null, new CodeSource(this.sourceURL, (java.security.CodeSigner[]) null));
 		}
 	}
 
 	static class JarPlugin extends Plugin {
 
-
+		private final URL sourceURL;
 		private final JarFile jarFile;
 
-		public JarPlugin(String path, PluginClassLoader classLoader) throws IOException {
-			this(path, classLoader, new JarFile(path));
+		public JarPlugin(Path path, PluginClassLoader classLoader) throws IOException {
+			this(path, classLoader, new JarFile(path.toString()));
 		}
 
-		public JarPlugin(String path, PluginClassLoader classLoader, JarFile jarFile) {
-			super(path, classLoader);
+		public JarPlugin(Path path, PluginClassLoader classLoader, JarFile jarFile) {
+			super(path.toString(), classLoader);
+			this.sourceURL = pathToUrl(path);
 			this.jarFile = jarFile;
 		}
 
@@ -360,18 +371,19 @@ public abstract class Plugin {
 			if(entry == null)
 				return null;
 			return new LoadedClassFile(ArrayUtil.readInputStreamToByteArray(this.jarFile.getInputStream(entry)), this.jarFile.getManifest(),
-					new CodeSource(null, entry.getCodeSigners()));
+					new CodeSource(this.sourceURL, entry.getCodeSigners()));
 		}
 	}
 
 	static class JarInputStreamPlugin extends Plugin {
 
-
+		private final URL sourceURL;
 		private final Manifest manifest;
 		private final Map<String, Map.Entry<JarEntry, byte[]>> entries = new HashMap<>();
 
 		public JarInputStreamPlugin(String path, PluginClassLoader classLoader, JarInputStream jarInputStream) throws IOException {
 			super(path, classLoader);
+			this.sourceURL = pathToUrl(java.nio.file.Paths.get(path));
 			this.manifest = jarInputStream.getManifest();
 			JarEntry entry;
 			while((entry = jarInputStream.getNextJarEntry()) != null){
@@ -384,7 +396,7 @@ public abstract class Plugin {
 			Map.Entry<JarEntry, byte[]> e = this.entries.get(relativePath);
 			if(e == null)
 				return null;
-			return new LoadedClassFile(e.getValue(), this.manifest, new CodeSource(null, e.getKey().getCodeSigners()));
+			return new LoadedClassFile(e.getValue(), this.manifest, new CodeSource(this.sourceURL, e.getKey().getCodeSigners()));
 		}
 	}
 }

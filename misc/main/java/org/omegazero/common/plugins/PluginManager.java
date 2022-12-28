@@ -127,7 +127,7 @@ public class PluginManager implements Iterable<Plugin> {
 			while(jarEntries.hasMoreElements()){
 				JarEntry entry = jarEntries.nextElement();
 				String entryName = entry.getName();
-				if(entry.isDirectory() || !entryName.startsWith(innerPath) || (((flags & ALLOW_NONJAR) == 0) && !entryName.toLowerCase().endsWith(".jar")))
+				if(entry.isDirectory() || (!entryName.startsWith(innerPath) && !innerPath.equals("/")) || (((flags & ALLOW_NONJAR) == 0) && !entryName.toLowerCase().endsWith(".jar")))
 					continue;
 				String path = jarFilePath + "/" + entryName;
 				logger.trace("Loading nested JAR plugin ", path);
@@ -180,7 +180,7 @@ public class PluginManager implements Iterable<Plugin> {
 		if(Files.isDirectory(path))
 			this.initPlugin(new Plugin.DirectoryPlugin(path, this.classLoader));
 		else
-			this.initPlugin(new Plugin.JarPlugin(path.toString(), this.classLoader));
+			this.initPlugin(new Plugin.JarPlugin(path, this.classLoader));
 	}
 
 	private void initPlugin(Plugin plugin) {

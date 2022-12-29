@@ -25,4 +25,12 @@ public interface LoggerOutput {
 	 * Flushes any buffered data to the underlying output.
 	 */
 	public void flush();
+
+	/**
+	 * Closes this {@code LoggerOutput}, flushing any remaining data and freeing resources. After a call to this method, the behavior of other methods in this interfaces is undefined.
+	 *
+	 * @since 2.11.0
+	 */
+	public default void close(){
+	}
 }

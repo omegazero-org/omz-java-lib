@@ -32,6 +32,24 @@ import org.omegazero.common.util.PropertyUtil;
  */
 public final class LoggerUtil {
 
+	/**
+	 * The initial value of {@link System#out}.
+	 */
+	public static final PrintStream sysOut = System.out;
+	/**
+	 * The initial value of {@link System#err}.
+	 */
+	public static final PrintStream sysErr = System.err;
+
+	/**
+	 * System property <code>org.omegazero.common.logging.internalDebug</code>
+	 * <p>
+	 * Enables logging of internal debugging messages to {@code stderr}.
+	 * <p>
+	 * <b>Default:</b> {@code false}
+	 */
+	public static final boolean ENABLE_INTERNAL_DEBUG = PropertyUtil.getBoolean("org.omegazero.common.logging.internalDebug", false);
+
 	private static final String[] SKIP_CLASSES = { "sun.reflect", "java.lang.reflect", "jdk.internal.reflect" };
 
 	private static final Logger logger = createLogger();
@@ -44,15 +62,6 @@ public final class LoggerUtil {
 	private static final List<BiConsumer<LogLevel, String>> listenersFine = new ArrayList<>();
 
 	private static List<LoggerOutput> outputs = new ArrayList<>();
-
-	/**
-	 * The initial value of {@link System#out}.
-	 */
-	public static final PrintStream sysOut = System.out;
-	/**
-	 * The initial value of {@link System#err}.
-	 */
-	public static final PrintStream sysErr = System.err;
 
 	private LoggerUtil() {
 	}
@@ -78,10 +87,16 @@ public final class LoggerUtil {
 			LoggerUtil.logLevel = level;
 		else
 			LoggerUtil.logLevel = LogLevel.INFO;
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: Init with log level " + logLevel + " and file " + file);
 
 		addLoggerOutput(new StdStreamsLoggerOutput());
-		if(file != null)
-			addLoggerOutput(new FileLoggerOutput(file));
+		try{
+			if(file != null)
+				addLoggerOutput(new FileLoggerOutput(file));
+		}catch(IOException e){
+			sysErr.println("LoggerUtil: WARNING: An error occured creating a FileLoggerOutput for '" + file + "': " + e);
+		}
 	}
 
 	/**
@@ -91,12 +106,16 @@ public final class LoggerUtil {
 	 */
 	public static void close() {
 		new LUPermission("settings", "close", null).check();
-		FileLoggerOutput o = getLoggerOutputByType(FileLoggerOutput.class);
-		if(o != null){
-			logger.info("Saving log to '" + o.getLogFile() + "'");
+		FileLoggerOutput fout = getLoggerOutputByType(FileLoggerOutput.class);
+		if(fout != null){
+			logger.info("Saving log to '" + fout.getLogFile() + "'");
 		}
-		flushLogBuffer();
-		outputs.clear();
+		synchronized(outputs){
+			for(LoggerOutput o : outputs){
+				o.close();
+			}
+			outputs.clear();
+		}
 	}
 
 
@@ -131,6 +150,8 @@ public final class LoggerUtil {
 		String[] str = fullName.split("\\.");
 		String label = str[str.length - 1];
 		new LUPermission("logger", "create", fullName).check();
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: New StandardLogger for " + fullName);
 		return new StandardLogger(fullName, label);
 	}
 
@@ -212,6 +233,8 @@ public final class LoggerUtil {
 		synchronized(listeners){
 			listeners.add(listener);
 		}
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: Added log listener " + listener);
 	}
 
 	/**
@@ -228,6 +251,8 @@ public final class LoggerUtil {
 		synchronized(listenersFine){
 			listenersFine.add(listener);
 		}
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: Added fine log listener " + listener);
 	}
 
 
@@ -279,6 +304,8 @@ public final class LoggerUtil {
 		synchronized(outputs){
 			outputs.add(output);
 		}
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: Added logger output " + output);
 	}
 
 	/**
@@ -290,13 +317,17 @@ public final class LoggerUtil {
 	 */
 	public static boolean removeLoggerOutput(LoggerOutput output){
 		new LUPermission("loggerOutput", "remove", output).check();
+		boolean f;
 		synchronized(outputs){
-			return outputs.remove(output);
+			f = outputs.remove(output);
 		}
+		if(ENABLE_INTERNAL_DEBUG && f)
+			sysErr.println("LoggerUtil: Removed logger output " + output);
+		return f;
 	}
 
 	/**
-	 * Returns a configured {@link LoggerOutput} with the given type.
+	 * Returns a configured {@link LoggerOutput} with the given type or a subtype thereof. If multiple {@code LoggerOutput}s match, it is undefined which instance is returned.
 	 *
 	 * @param cl The {@link LoggerOutput} type to search for
 	 * @return The {@link LoggerOutput} instance, or {@code null} if no matching instance was found
@@ -307,7 +338,7 @@ public final class LoggerUtil {
 	public static <T extends LoggerOutput> T getLoggerOutputByType(Class<T> cl){
 		synchronized(outputs){
 			for(LoggerOutput o : outputs){
-				if(o.getClass().equals(cl))
+				if(cl.isAssignableFrom(o.getClass()))
 					return (T) o;
 			}
 			return null;
@@ -315,7 +346,7 @@ public final class LoggerUtil {
 	}
 
 	/**
-	 * Returns all configured {@link LoggerOutput}s with the given type.
+	 * Returns all configured {@link LoggerOutput}s with the given type or a subtype thereof.
 	 *
 	 * @param cl The {@link LoggerOutput} type to search for
 	 * @return The {@link LoggerOutput} instances, may be empty
@@ -327,7 +358,7 @@ public final class LoggerUtil {
 		synchronized(outputs){
 			List<T> outs = new ArrayList<>();
 			for(LoggerOutput o : outputs){
-				if(o.getClass().equals(cl))
+				if(cl.isAssignableFrom(o.getClass()))
 					outs.add((T) o);
 			}
 			return outs;
@@ -412,6 +443,8 @@ public final class LoggerUtil {
 		new LUPermission("settings", "setLogLevel", logLevel).check();
 		LogLevel prev = LoggerUtil.logLevel;
 		LoggerUtil.logLevel = logLevel;
+		if(ENABLE_INTERNAL_DEBUG)
+			sysErr.println("LoggerUtil: Log level changed to " + logLevel + " (from " + prev + ")");
 		return prev;
 	}
 

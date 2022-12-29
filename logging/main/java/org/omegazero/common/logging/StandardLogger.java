@@ -24,14 +24,6 @@ import org.omegazero.common.util.Util;
 public final class StandardLogger implements Logger {
 
 	/**
-	 * System property <code>org.omegazero.common.logging.internalDebug</code>
-	 * <p>
-	 * Enables logging of internal debugging messages to {@code stderr}.
-	 * <p>
-	 * <b>Default:</b> {@code false}
-	 */
-	public static final boolean ENABLE_INTERNAL_DEBUG = PropertyUtil.getBoolean("org.omegazero.common.logging.internalDebug", false);
-	/**
 	 * System property <code>org.omegazero.common.logging.stackTraces.classSource</code>
 	 * <p>
 	 * Enables logging of the source directory or JAR file of the class in each stack frame in stack traces.
@@ -162,7 +154,7 @@ public final class StandardLogger implements Logger {
 			}
 			return (StackTraceElement[]) throwableGetStackTraceInternalMethod.invoke(throwable);
 		}catch(Exception e){
-			if(ENABLE_INTERNAL_DEBUG)
+			if(LoggerUtil.ENABLE_INTERNAL_DEBUG)
 				LoggerUtil.sysErr.println("StandardLogger: Using Throwable.getOurStackTrace failed: " + e);
 			throwableGetStackTraceInternal = Throwable::getStackTrace;
 			return throwable.getStackTrace();
@@ -199,7 +191,7 @@ public final class StandardLogger implements Logger {
 					stackTrace[i++] = new WrappedExtendedStackTraceElement(xste);
 				populated = true;
 			}catch(ReflectiveOperationException | NoClassDefFoundError e){
-				if(ENABLE_INTERNAL_DEBUG)
+				if(LoggerUtil.ENABLE_INTERNAL_DEBUG)
 					LoggerUtil.sysErr.println("StandardLogger: Assuming xst is not available: " + e);
 				xstAvailable = false;
 			}
@@ -278,7 +270,7 @@ public final class StandardLogger implements Logger {
 			try{
 				return (Class<?>) xst_ExtendedStackTraceElement__methods[4].invoke(this.xstElement);
 			}catch(ReflectiveOperationException e){
-				if(ENABLE_INTERNAL_DEBUG)
+				if(LoggerUtil.ENABLE_INTERNAL_DEBUG)
 					LoggerUtil.sysErr.println("StandardLogger: WrappedExtendedStackTraceElement.getDeclaringClass failed: " + e);
 				return null;
 			}
@@ -318,7 +310,7 @@ public final class StandardLogger implements Logger {
 					return sb.toString();
 				}
 			}catch(ReflectiveOperationException e){
-				if(ENABLE_INTERNAL_DEBUG)
+				if(LoggerUtil.ENABLE_INTERNAL_DEBUG)
 					LoggerUtil.sysErr.println("StandardLogger: WrappedExtendedStackTraceElement.toString failed: " + e);
 				return this.xstElement.toString();
 			}

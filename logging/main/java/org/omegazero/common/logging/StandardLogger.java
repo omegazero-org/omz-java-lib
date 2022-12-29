@@ -29,6 +29,8 @@ public final class StandardLogger implements Logger {
 	 * Enables logging of the source directory or JAR file of the class in each stack frame in stack traces.
 	 * <p>
 	 * <b>Default:</b> {@code true}
+	 *
+	 * @since 2.11.0
 	 */
 	public static final boolean ENABLE_ST_CLASS_SOURCE = PropertyUtil.getBoolean("org.omegazero.common.logging.stackTraces.classSource", true);
 	/**
@@ -37,6 +39,8 @@ public final class StandardLogger implements Logger {
 	 * If {@link #ENABLE_ST_CLASS_SOURCE} is {@code true}, enables logging of the full source path, instead of just the file name.
 	 * <p>
 	 * <b>Default:</b> {@code false}
+	 *
+	 * @since 2.11.0
 	 */
 	public static final boolean ENABLE_ST_CLASS_SOURCE_FULL = PropertyUtil.getBoolean("org.omegazero.common.logging.stackTraces.classSourceFull", false);
 	/**
@@ -45,6 +49,8 @@ public final class StandardLogger implements Logger {
 	 * Enables verbose logging of stack frames using the {@code co.paralleluniverse:extended-stacktrace} library, if available.
 	 * <p>
 	 * <b>Default:</b> {@code false}
+	 *
+	 * @since 2.11.0
 	 */
 	public static final boolean ENABLE_XST_VERBOSE = PropertyUtil.getBoolean("org.omegazero.common.logging.stackTraces.xstVerbose", false);
 

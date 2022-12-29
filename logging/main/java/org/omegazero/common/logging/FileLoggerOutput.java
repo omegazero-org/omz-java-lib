@@ -10,8 +10,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
-import java.util.List;
 import java.util.Objects;
 
 import org.omegazero.common.event.Tasks;
@@ -27,7 +25,7 @@ public class FileLoggerOutput implements LoggerOutput {
 	/**
 	 * System property <code>org.omegazero.common.logging.saveInterval</code>
 	 * <p>
-	 * The interval in seconds between explicit data flushes to the log file.
+	 * The default interval in seconds between explicit data flushes to the log file.
 	 * <p>
 	 * <b>Default:</b> {@code 300}
 	 */
@@ -35,29 +33,62 @@ public class FileLoggerOutput implements LoggerOutput {
 	/**
 	 * System property <code>org.omegazero.common.logging.logBufferSize</code>
 	 * <p>
-	 * The size of the internal log data buffer.
+	 * The default size of the internal log data buffer.
 	 * <p>
 	 * <b>Default:</b> {@code 100KB}
+	 *
+	 * @since 2.11.0
 	 */
 	public static final int LOG_BUFFER_BYTES = PropertyUtil.getInt("org.omegazero.common.logging.logBufferSize", 100000);
+	/**
+	 * System property <code>org.omegazero.common.logging.syncFlush</code>
+	 * <p>
+	 * Sets the default value for {@link #setSyncFlush(boolean) syncFlush}.
+	 * <p>
+	 * <b>Default:</b> {@code false}
+	 *
+	 * @since 2.11.0
+	 */
+	public static final boolean SYNC_FLUSH_DEFAULT = PropertyUtil.getBoolean("org.omegazero.common.logging.syncFlush", false);
 
 	private final String logFile;
-	private final PrintWriter writer;
+	private final int logBufferBytes;
 
-	private boolean syncFlush = false;
+	/**
+	 * The output writer.
+	 */
+	protected PrintWriter writer;
+
+	private boolean syncFlush = SYNC_FLUSH_DEFAULT;
 
 	/**
 	 * Creates a new {@code FileLoggerOutput}, writing to the given {@code logFile}.
 	 *
 	 * @param logFile The name of the output log file
 	 * @throws IOException If an IO error occurs while opening the file
+	 * @see #FileLoggerOutput(String, int, int)
 	 */
 	public FileLoggerOutput(String logFile) throws IOException {
+		this(logFile, -1, -1);
+	}
+
+	/**
+	 * Creates a new {@code FileLoggerOutput}, writing to the given {@code logFile}.
+	 *
+	 * @param logFile The name of the output log file
+	 * @param logBufferBytes The size of the internal log data buffer. If this value is nonpositive, the {@link #LOG_BUFFER_BYTES default} is used
+	 * @param saveInterval The save interval. If this value is nonpositive, the {@link #SAVE_INTERVAL default} is used
+	 * @throws IOException If an IO error occurs while opening the file
+	 * @since 2.11.0
+	 */
+	public FileLoggerOutput(String logFile, int logBufferBytes, int saveInterval) throws IOException {
 		this.logFile = Objects.requireNonNull(logFile);
-		this.writer = new PrintWriter(new BufferedWriter(new FileWriter(this.logFile, true), LOG_BUFFER_BYTES), false);
+		this.logBufferBytes = logBufferBytes > 0 ? logBufferBytes : LOG_BUFFER_BYTES;
+
+		this.reopen();
 		Tasks.I.interval((args) -> {
 			this.flush();
-		}, SAVE_INTERVAL).daemon();
+		}, saveInterval > 0 ? saveInterval : SAVE_INTERVAL).daemon();
 	}
 
 
@@ -80,15 +111,27 @@ public class FileLoggerOutput implements LoggerOutput {
 	}
 
 
+	/**
+	 * Closes and re-opens the file output stream where data is written to.
+	 *
+	 * @since 2.11.0
+	 */
+	protected void reopen() throws IOException {
+		if(this.writer != null)
+			this.writer.close();
+		this.writer = new PrintWriter(new BufferedWriter(new FileWriter(this.logFile, true), this.logBufferBytes), false);
+	}
+
+
 	@Override
-	public synchronized void writeLine(String line, String markup){
+	public void writeLine(String line, String markup){
 		this.writer.println(line);
 		if(this.syncFlush)
 			this.flush();
 	}
 
 	@Override
-	public synchronized void flush(){
+	public void flush(){
 		this.writer.flush();
 	}
 

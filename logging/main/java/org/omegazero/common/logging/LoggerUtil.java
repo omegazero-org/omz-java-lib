@@ -47,6 +47,8 @@ public final class LoggerUtil {
 	 * Enables logging of internal debugging messages to {@code stderr}.
 	 * <p>
 	 * <b>Default:</b> {@code false}
+	 *
+	 * @since 2.11.0
 	 */
 	public static final boolean ENABLE_INTERNAL_DEBUG = PropertyUtil.getBoolean("org.omegazero.common.logging.internalDebug", false);
 
@@ -93,9 +95,9 @@ public final class LoggerUtil {
 		addLoggerOutput(new StdStreamsLoggerOutput());
 		try{
 			if(file != null)
-				addLoggerOutput(new FileLoggerOutput(file));
+				addLoggerOutput(new RotatingFileLoggerOutput(file, -1));
 		}catch(IOException e){
-			sysErr.println("LoggerUtil: WARNING: An error occured creating a FileLoggerOutput for '" + file + "': " + e);
+			sysErr.println("LoggerUtil: WARNING: An error occured creating a RotatingFileLoggerOutput for '" + file + "': " + e);
 		}
 	}
 

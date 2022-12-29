@@ -274,14 +274,12 @@ public class TaskQueueExecutor {
 	/**
 	 * Shuts this {@link TaskQueueExecutor} down by gracefully stopping the worker threads.
 	 * <p>
-	 * 
 	 * Equivalent to a call to:
-	 * 
-	 * <pre>
+	 * <pre><code>
 	 * {@link #exit(boolean) exit}(false)
-	 * </pre>
+	 * </code></pre>
 	 */
-	public void exit() {
+	public void exit(){
 		this.exit(false);
 	}
 
@@ -292,10 +290,10 @@ public class TaskQueueExecutor {
 	 * If <b>blocking</b> is <code>true</code>, the calling thread will be blocked until all worker threads have exited. If the calling thread is interrupted while waiting, this
 	 * method returns <code>false</code>.
 	 * 
-	 * @param blocking Whether to wait for all worker threads to exit
+	 * @param blocking {@code true} to wait for all worker threads to exit
 	 * @return <code>true</code> if the calling thread was interrupted while waiting for the worker threads to exit
 	 */
-	public boolean exit(boolean blocking) {
+	public boolean exit(boolean blocking){
 		synchronized(this){
 			if(!this.running)
 				throw new IllegalStateException("Not running");
@@ -613,6 +611,40 @@ public class TaskQueueExecutor {
 			}
 		}
 
+		private void runTask(Task task){
+			TaskQueueExecutor.this.workingThreads.incrementAndGet();
+			this.executing = true;
+			try{
+				task.run();
+			}catch(Exception e){
+				if(TaskQueueExecutor.this.errorHandler != null)
+					TaskQueueExecutor.this.errorHandler.accept(e);
+				else
+					e.printStackTrace();
+			}finally{
+				Thread.interrupted(); // clear interrupt status
+				this.executedTasks++;
+				this.executing = false;
+				TaskQueueExecutor.this.workingThreads.decrementAndGet();
+			}
+		}
+
+		private void executeRemainingTasks(){
+			TaskQueueExecutor.this.lock.lock();
+			try{
+				Task task;
+				while((task = TaskQueueExecutor.this.queue.poll()) != null){
+					TaskQueueExecutor.this.lock.unlock();
+					this.runTask(task);
+					TaskQueueExecutor.this.lock.lock();
+				}
+				while((task = this.localQueue.poll()) != null)
+					this.runTask(task);
+			}finally{
+				TaskQueueExecutor.this.lock.unlock();
+			}
+		}
+
 
 		@Override
 		public void run() {
@@ -623,22 +655,9 @@ public class TaskQueueExecutor {
 				}catch(InterruptedException e){
 					break;
 				}
-				TaskQueueExecutor.this.workingThreads.incrementAndGet();
-				this.executing = true;
-				try{
-					task.run();
-				}catch(Exception e){
-					if(TaskQueueExecutor.this.errorHandler != null)
-						TaskQueueExecutor.this.errorHandler.accept(e);
-					else
-						e.printStackTrace();
-				}finally{
-					Thread.interrupted(); // clear interrupt status
-					this.executedTasks++;
-					this.executing = false;
-					TaskQueueExecutor.this.workingThreads.decrementAndGet();
-				}
+				this.runTask(task);
 			}
+			this.executeRemainingTasks();
 		}
 	}
 

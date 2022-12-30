@@ -100,13 +100,28 @@ public final class PropertyUtil {
 
 	/**
 	 * Returns whether the system property identified by the given <b>key</b> is set.
-	 * 
+	 *
 	 * @param key The key
 	 * @return {@code true} if a system property with the given <b>key</b> exists
 	 * @since 2.8
 	 */
 	public static boolean isPropertySet(String key) {
 		return System.getProperties().containsKey(key);
+	}
+
+	/**
+	 * Sets the system property with the given <b>key</b> to the given <b>value</b>, if no property with the given <b>key</b> is already set.
+	 *
+	 * @param key The key
+	 * @param value The value
+	 * @return {@code true} if a system property with the given <b>key</b> existed already
+	 * @since 2.11.0
+	 */
+	public static boolean setDefault(String key, String value) {
+		boolean exists = isPropertySet(key);
+		if(!exists)
+			System.setProperty(key, value);
+		return exists;
 	}
 
 

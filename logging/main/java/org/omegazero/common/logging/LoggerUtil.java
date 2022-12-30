@@ -70,7 +70,19 @@ public final class LoggerUtil {
 
 
 	/**
-	 * Initializes the logger, setting the maximum log level to <b>level</b> and the log file name, where log messages will be saved to.
+	 * Initializes the logger library, setting the log level to {@link LogLevel#INFO}.
+	 * <p>
+	 * Equivalent to <code>{@link #init(LogLevel, String) init}(null, null)</code>.
+	 *
+	 * @throws SecurityException If a security manager is present and does not allow changing logger settings
+	 * @since 2.11.0
+	 */
+	public static void init() {
+		init(null, null);
+	}
+
+	/**
+	 * Initializes the logger library, setting the maximum log level to <b>level</b> and the log file name, where log messages will be saved to.
 	 * <p>
 	 * To reduce disk writes and increase logging speed, by default, log messages will only be saved every 5 minutes, if the logger buffer is full or when
 	 * {@link LoggerUtil#close()} is called. This may be disabled using {@link LoggerUtil#setSyncFlush(boolean)} by setting it to {@code true}.

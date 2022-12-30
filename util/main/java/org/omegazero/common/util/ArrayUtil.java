@@ -446,7 +446,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(boolean[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -460,7 +460,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(byte[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -474,7 +474,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(char[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -488,7 +488,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(short[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -502,7 +502,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(int[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -516,7 +516,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(long[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -530,7 +530,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(float[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -544,7 +544,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static void checkBounds(double[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -559,7 +559,7 @@ public final class ArrayUtil {
 	 * @since 2.8
 	 */
 	public static <T> void checkBounds(T[] array, int offset, int length) {
-		if(offset < 0 || offset + length > array.length)
+		if(offset < 0 || offset > array.length - length)
 			throw new IndexOutOfBoundsException("offset=" + offset + " length=" + length + " array.length=" + array.length);
 	}
 
@@ -597,5 +597,50 @@ public final class ArrayUtil {
 				throw new IndexOutOfBoundsException("Maximum size exceeded: " + baos.size() + "/" + limit);
 		}
 		return baos.toByteArray();
+	}
+
+
+	private static char toHexChar(int v){
+		if(v < 10)
+			return (char) ('0' + v);
+		else if(v < 16)
+			return (char) ('a' + v - 10);
+		else
+			throw new IllegalArgumentException("value " + v);
+	}
+
+	/**
+	 * Represents the given <b>data</b> as a string of hexadecimal characters.
+	 * <p>
+	 * A call to this method is equivalent to a call to
+	 * <pre><code>
+		{@link #toHexString(byte[], int, int) toHexString}(data, 0, data.length)
+	 * </code></pre>
+	 *
+	 * @return The hexadecimal representation of the data
+	 * @since 2.11.0
+	 */
+	public static String toHexString(byte[] data){
+		return toHexString(data, 0, data.length);
+	}
+
+	/**
+	 * Represents the given <b>data</b>, starting at <b>offset</b> and with the given <b>length</b>, as a string of hexadecimal characters.
+	 * <p>
+	 * Each byte in the byte array slice is represented by exactly two lowercase hexadecimal characters.
+	 *
+	 * @return The hexadecimal representation of the data
+	 * @throws IndexOutOfBoundsException If <b>offset</b> and <b>length</b> refer to an index outside of the given array
+	 * @since 2.11.0
+	 */
+	public static String toHexString(byte[] data, int offset, int length){
+		checkBounds(data, offset, length);
+		char[] str = new char[length << 1];
+		for(int i = 0; i < length; i++){
+			byte b = data[offset + i];
+			str[i << 1] = toHexChar((b >> 4) & 0xf);
+			str[(i << 1) + 1] = toHexChar(b & 0xf);
+		}
+		return new String(str);
 	}
 }

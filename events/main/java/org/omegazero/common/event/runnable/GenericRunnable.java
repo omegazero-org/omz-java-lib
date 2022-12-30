@@ -7,7 +7,7 @@
 package org.omegazero.common.event.runnable;
 
 /**
- * Represents a runnable or method reference with any number of arguments with any type.
+ * Represents a runnable or method reference with any number of arguments with any type, allowed to throw any exception.
  *
  * @since 2.10
  */
@@ -18,8 +18,9 @@ public interface GenericRunnable {
 	 *
 	 * @param args The arguments
 	 * @throws IllegalArgumentException If the number of elements in {@code args} does not match the value returned by {@link #getArgumentCount()}
+	 * @throws Exception Any exception thrown by the runnable
 	 */
-	public void run(Object... args);
+	public void run(Object... args) throws Exception;
 
 	/**
 	 * Returns the number of arguments this {@code GenericRunnable} accepts.
@@ -52,11 +53,11 @@ public interface GenericRunnable {
 		/**
 		 * Runs this {@code GenericRunnable}.
 		 */
-		public void run();
+		public void run() throws Exception;
 
 
 		@Override
-		public default void run(Object... args){
+		public default void run(Object... args) throws Exception {
 			this.checkArgc(args.length);
 			this.run();
 		}
@@ -81,12 +82,12 @@ public interface GenericRunnable {
 		 *
 		 * @param arg0 The first argument
 		 */
-		public void run(A arg0);
+		public void run(A arg0) throws Exception;
 
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public default void run(Object... args){
+		public default void run(Object... args) throws Exception {
 			this.checkArgc(args.length);
 			this.run((A) args[0]);
 		}
@@ -113,12 +114,12 @@ public interface GenericRunnable {
 		 * @param arg0 The first argument
 		 * @param arg1 The second argument
 		 */
-		public void run(A arg0, B arg1);
+		public void run(A arg0, B arg1) throws Exception;
 
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public default void run(Object... args){
+		public default void run(Object... args) throws Exception {
 			this.checkArgc(args.length);
 			this.run((A) args[0], (B) args[1]);
 		}
@@ -147,12 +148,12 @@ public interface GenericRunnable {
 		 * @param arg1 The second argument
 		 * @param arg2 The third argument
 		 */
-		public void run(A arg0, B arg1, C arg2);
+		public void run(A arg0, B arg1, C arg2) throws Exception;
 
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public default void run(Object... args){
+		public default void run(Object... args) throws Exception {
 			this.checkArgc(args.length);
 			this.run((A) args[0], (B) args[1], (C) args[2]);
 		}
@@ -183,12 +184,12 @@ public interface GenericRunnable {
 		 * @param arg2 The third argument
 		 * @param arg3 The fourth argument
 		 */
-		public void run(A arg0, B arg1, C arg2, D arg3);
+		public void run(A arg0, B arg1, C arg2, D arg3) throws Exception;
 
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public default void run(Object... args){
+		public default void run(Object... args) throws Exception {
 			this.checkArgc(args.length);
 			this.run((A) args[0], (B) args[1], (C) args[2], (D) args[3]);
 		}

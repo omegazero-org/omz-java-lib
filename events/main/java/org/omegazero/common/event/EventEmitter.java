@@ -79,12 +79,23 @@ public class EventEmitter {
 		if(expect >= 0 && expect != id)
 			throw new IllegalStateException("createEventId: Expectation failed: expect=" + expect + " id=" + id);
 		this.events.put(name, id);
-		if(this.fastAccessEventHandlers != null)
-			this.fastAccessEventHandlers = Arrays.copyOfRange(this.fastAccessEventHandlers, 0, id + 1);
-		else
-			this.fastAccessEventHandlers = new EventListenersObj[1];
+		this.reserveEventIdSpace(id);
 		this.fastAccessIdCounter++;
 		return id;
+	}
+
+	/**
+	 * Pre-allocates internal data structures for storing event IDs up to <b>highestId</b>.
+	 *
+	 * @param highestId The highest event ID
+	 * @since 2.11.0
+	 */
+	public synchronized void reserveEventIdSpace(int highestId){
+		int num = highestId + 1;
+		if(this.fastAccessEventHandlers == null)
+			this.fastAccessEventHandlers = new EventListenersObj[num];
+		else if(this.fastAccessEventHandlers.length < num)
+			this.fastAccessEventHandlers = Arrays.copyOfRange(this.fastAccessEventHandlers, 0, num);
 	}
 
 
@@ -311,7 +322,7 @@ public class EventEmitter {
 
 	/**
 	 * If set to {@code true}, all listeners for an event will always be executed regardless of errors thrown at the listener-level. If set to {@code false}, event execution will be canceled at the
-	 * first thrown exception.
+	 * first thrown exception. The default is {@code true}.
 	 *
 	 * @param coalesceListenerErrors {@code true} to always execute all listeners
 	 * @see EventEmitter
@@ -356,7 +367,7 @@ public class EventEmitter {
 	 * @see EventEmitter
 	 */
 	public int runEvent(int id, Object... args){
-		if(this.fastAccessEventHandlers == null)
+		if(this.fastAccessEventHandlers == null || this.fastAccessIdCounter < 0)
 			throw new IllegalStateException("fastAccess is not enabled");
 		if(id < 0 || id >= this.fastAccessEventHandlers.length)
 			throw new IllegalArgumentException("Invalid event id: " + id);
@@ -366,7 +377,7 @@ public class EventEmitter {
 	private int runListeners(Object dbgName, EventListenersObj listeners, Object... args){
 		if(listeners == null)
 			return 0;
-		List<Throwable> execErrors = null;
+		List<ExecutionFailedException> execErrors = null;
 		List<GenericRunnable> listenerRunnables = listeners.getRunList();
 		int total = listenerRunnables.size();
 		for(GenericRunnable runnable : listenerRunnables){
@@ -383,6 +394,8 @@ public class EventEmitter {
 			}
 		}
 		if(execErrors != null){
+			if(execErrors.size() == 1)
+				throw execErrors.get(0);
 			ExecutionFailedException err = new ExecutionFailedException(execErrors.size() + " of " + total + " event listeners failed to execute succesfully");
 			for(Throwable e : execErrors)
 				err.addSuppressed(e);
@@ -405,7 +418,7 @@ public class EventEmitter {
 
 
 		@Override
-		public void run(Object... args){
+		public void run(Object... args) throws Exception {
 			EventEmitter.this.removeEventListener(this.name, this);
 			this.runnable.run(args);
 		}

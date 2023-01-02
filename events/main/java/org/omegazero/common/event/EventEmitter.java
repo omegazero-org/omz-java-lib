@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.omegazero.common.event.runnable.GenericRunnable;
@@ -22,6 +23,9 @@ import org.omegazero.common.event.task.ExecutionFailedException;
  * Listeners are added to a specific event name using {@link #addEventListener(String, GenericRunnable)} or similar methods. Upon dispatching an event using {@link #runEvent(String, Object...)},
  * all event listeners registered for the given event name are called with the given arguments. The number of arguments passed and the number of arguments in the event listeners must match, otherwise
  * an {@code IllegalArgumentException} will be thrown at the listener-level.
+ * <p>
+ * Each event may also have a <i>default listener</i> registered, which is called when the event is emitted, and only if no other (regular) listeners are registered
+ * (see {@link #setDefaultEventListener(String, GenericRunnable)}).
  * <p>
  * By default, all event listeners are executed regardless of any exceptions thrown at the listener-level. If any listener did throw an exception, the {@code runEvent} call will throw an
  * {@code ExecutionFailedException} detailing the thrown exception(s), after all listeners were executed. See also: {@link #setCoalesceListenerErrors(boolean)}.
@@ -100,6 +104,7 @@ public class EventEmitter {
 
 
 	private EventListenersObj getEventListeners0(String name, boolean create){
+		Objects.requireNonNull(name);
 		assert Thread.holdsLock(this);
 		EventListenersObj listeners;
 		if(this.fastAccessIdCounter >= 0){
@@ -213,6 +218,7 @@ public class EventEmitter {
 	 * @see #prependEventListener(String, GenericRunnable)
 	 * @see #addEventListenerOnce(String, GenericRunnable)
 	 * @see #removeEventListener(String, GenericRunnable)
+	 * @see #setDefaultEventListener(String, GenericRunnable)
 	 */
 	public synchronized void addEventListener(String name, GenericRunnable runnable){
 		EventListenersObj listeners = this.getEventListeners0(name, true);
@@ -237,26 +243,31 @@ public class EventEmitter {
 
 	/**
 	 * Removes the given event listener from the event with the given {@code name}.
+	 * <p>
+	 * The default event listener may also be removed using this method.
 	 *
 	 * @param name The event name
 	 * @param runnable The event listener
 	 * @see #addEventListener(String, GenericRunnable)
 	 * @see #removeAllEventListeners(String)
+	 * @see #removeDefaultEventListener(String)
 	 */
 	public synchronized void removeEventListener(String name, GenericRunnable runnable){
 		EventListenersObj listeners = this.getEventListeners0(name, false);
 		if(listeners != null){
 			synchronized(listeners){
+				if(Objects.equals(runnable, listeners.defaultRunnable))
+					listeners.defaultRunnable = null;
 				listeners.list.remove(runnable);
 				listeners.listChanged();
-				if(this.fastAccessIdCounter < 0 && listeners.list.size() == 0)
+				if(this.fastAccessIdCounter < 0 && listeners.list.size() == 0 && listeners.defaultRunnable == null)
 					this.events.remove(name);
 			}
 		}
 	}
 
 	/**
-	 * Removes all event listeners from the event with the given {@code name}.
+	 * Removes all event listeners from the event with the given {@code name}, including the default listener.
 	 *
 	 * @param name The event name
 	 * @see #removeEventListener(String, GenericRunnable)
@@ -266,6 +277,7 @@ public class EventEmitter {
 			EventListenersObj listeners = this.getEventListeners0(name, false);
 			if(listeners != null){
 				synchronized(listeners){
+					listeners.defaultRunnable = null;
 					listeners.list.clear();
 					listeners.list.trimToSize();
 					listeners.listChanged();
@@ -277,7 +289,7 @@ public class EventEmitter {
 	}
 
 	/**
-	 * Returns the number of event listeners registered for the given event {@code name}.
+	 * Returns the number of event listeners registered for the given event {@code name}, excluding the default listener.
 	 *
 	 * @param name The event name
 	 * @return The number of listeners
@@ -298,7 +310,7 @@ public class EventEmitter {
 	}
 
 	/**
-	 * Returns an unmodifiable list of the event listeners registered for the given event {@code name}.
+	 * Returns an unmodifiable, possibly empty, list of the event listeners registered for the given event {@code name}, excluding the default listener.
 	 *
 	 * @param name The event name
 	 * @return The list of event listeners
@@ -309,7 +321,8 @@ public class EventEmitter {
 	}
 
 	/**
-	 * Returns {@code true} if the given event {@code name} is a known event.
+	 * Returns {@code true} if the given event {@code name} is a known event. An event is known if there are any listeners registered for it or if it was registered using
+	 * {@link #createEventId(String, int)}.
 	 *
 	 * @param name The event name
 	 * @return {@code true} if the given event {@code name} is a known event
@@ -317,6 +330,56 @@ public class EventEmitter {
 	 */
 	public synchronized boolean isEventRegistered(String name){
 		return this.events.containsKey(name);
+	}
+
+	/**
+	 * Registers the default event listener for the given event {@code name}. This event listener is called if and only if there are no other (regular) event listeners registered for the event.
+	 * <p>
+	 * Only a single default event listener can be registered per event. Any previous set default event listeners are overriden.
+	 *
+	 * @param name The event name
+	 * @param runnable The default event listener
+	 * @throws IllegalStateException If <i>fastAccess</i> is enabled and the given event {@code name} was not created using {@link #createEventId(String, int)}
+	 * @since 2.11.0
+	 * @see #removeDefaultEventListener(String)
+	 * @see #addEventListener(String, GenericRunnable)
+	 */
+	public synchronized void setDefaultEventListener(String name, GenericRunnable runnable){
+		EventListenersObj listeners = this.getEventListeners0(name, true);
+		synchronized(listeners){
+			listeners.defaultRunnable = runnable;
+		}
+	}
+
+	/**
+	 * Removes the default event listener of the given event {@code name}.
+	 *
+	 * @param name The event name
+	 * @since 2.11.0
+	 * @see #setDefaultEventListener(String, GenericRunnable)
+	 * @see #removeEventListener(String, GenericRunnable)
+	 */
+	public synchronized void removeDefaultEventListener(String name){
+		EventListenersObj listeners = this.getEventListeners0(name, false);
+		if(listeners != null){
+			synchronized(listeners){
+				listeners.defaultRunnable = null;
+			}
+		}
+	}
+
+	/**
+	 * Returns the default event listener of the given event {@code name}.
+	 *
+	 * @param name The event name
+	 * @return The registered default event listener, or {@code null} if there is none
+	 * @since 2.11.0
+	 */
+	public synchronized GenericRunnable getDefaultEventListener(String name){
+		EventListenersObj listeners = this.getEventListeners0(name, false);
+		if(listeners != null)
+			return listeners.defaultRunnable;
+		return null;
 	}
 
 
@@ -439,6 +502,7 @@ public class EventEmitter {
 
 		public final ArrayList<GenericRunnable> list;
 		public ArrayList<GenericRunnable> runList;
+		public GenericRunnable defaultRunnable;
 
 		public EventListenersObj(){
 			this.list = new ArrayList<GenericRunnable>(1);
@@ -452,8 +516,13 @@ public class EventEmitter {
 
 		@SuppressWarnings("unchecked")
 		public synchronized ArrayList<GenericRunnable> getRunList(){
-			if(this.runList == null)
-				this.runList = (ArrayList<GenericRunnable>) this.list.clone();
+			if(this.runList == null){
+				if(this.list.size() == 0 && this.defaultRunnable != null){
+					this.runList = new ArrayList<>(1);
+					this.runList.add(this.defaultRunnable);
+				}else
+					this.runList = (ArrayList<GenericRunnable>) this.list.clone();
+			}
 			return this.runList;
 		}
 	}

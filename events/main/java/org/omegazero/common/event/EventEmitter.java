@@ -141,7 +141,7 @@ public class EventEmitter {
 	 * @param runnable The event listener
 	 * @return This {@code EventEmitter}
 	 */
-	public EventEmitter on(String name, GenericRunnable runnable){
+	public final EventEmitter on(String name, GenericRunnable runnable){
 		this.addEventListener(name, runnable);
 		return this;
 	}
@@ -153,7 +153,7 @@ public class EventEmitter {
 	 * @param runnable The event listener
 	 * @return This {@code EventEmitter}
 	 */
-	public EventEmitter once(String name, GenericRunnable runnable){
+	public final EventEmitter once(String name, GenericRunnable runnable){
 		this.addEventListenerOnce(name, runnable);
 		return this;
 	}
@@ -165,7 +165,7 @@ public class EventEmitter {
 	 * @param runnable The event listener
 	 * @return This {@code EventEmitter}
 	 */
-	public EventEmitter off(String name, GenericRunnable runnable){
+	public final EventEmitter off(String name, GenericRunnable runnable){
 		this.removeEventListener(name, runnable);
 		return this;
 	}
@@ -177,7 +177,7 @@ public class EventEmitter {
 	 * @param args The arguments to pass to the event listeners
 	 * @return The number of registered listeners
 	 */
-	public int emit(String name, Object... args){
+	public final int emit(String name, Object... args){
 		return this.runEvent(name, args);
 	}
 
@@ -188,7 +188,7 @@ public class EventEmitter {
 	 * @param args The arguments to pass to the event listeners
 	 * @return The number of registered listeners
 	 */
-	public int emit(int id, Object... args){
+	public final int emit(int id, Object... args){
 		return this.runEvent(id, args);
 	}
 

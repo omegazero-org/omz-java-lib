@@ -147,6 +147,71 @@ public class EventEmitter {
 	}
 
 	/**
+	 * Alias for {@link #addEventListener(String, GenericRunnable)} for zero-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter on(String name, GenericRunnable.A0 runnable){
+		this.addEventListener(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListener(String, GenericRunnable)} for single-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter on(String name, GenericRunnable.A1<?> runnable){
+		this.addEventListener(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListener(String, GenericRunnable)} for two-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter on(String name, GenericRunnable.A2<?, ?> runnable){
+		this.addEventListener(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListener(String, GenericRunnable)} for three-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter on(String name, GenericRunnable.A3<?, ?, ?> runnable){
+		this.addEventListener(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListener(String, GenericRunnable)} for four-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter on(String name, GenericRunnable.A4<?, ?, ?, ?> runnable){
+		this.addEventListener(name, runnable);
+		return this;
+	}
+
+	/**
 	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)}.
 	 *
 	 * @param name The event name
@@ -154,6 +219,71 @@ public class EventEmitter {
 	 * @return This {@code EventEmitter}
 	 */
 	public final EventEmitter once(String name, GenericRunnable runnable){
+		this.addEventListenerOnce(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)} for zero-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter once(String name, GenericRunnable.A0 runnable){
+		this.addEventListenerOnce(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)} for single-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter once(String name, GenericRunnable.A1<?> runnable){
+		this.addEventListenerOnce(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)} for two-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter once(String name, GenericRunnable.A2<?, ?> runnable){
+		this.addEventListenerOnce(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)} for three-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter once(String name, GenericRunnable.A3<?, ?, ?> runnable){
+		this.addEventListenerOnce(name, runnable);
+		return this;
+	}
+
+	/**
+	 * Alias for {@link #addEventListenerOnce(String, GenericRunnable)} for four-argument events.
+	 *
+	 * @param name The event name
+	 * @param runnable The event listener
+	 * @return This {@code EventEmitter}
+	 * @since 2.11.0
+	 */
+	public final EventEmitter once(String name, GenericRunnable.A4<?, ?, ?, ?> runnable){
 		this.addEventListenerOnce(name, runnable);
 		return this;
 	}

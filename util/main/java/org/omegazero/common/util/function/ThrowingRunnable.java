@@ -8,16 +8,9 @@ package org.omegazero.common.util.function;
 
 /**
  * Similar to a {@link Runnable}, except that the functional {@code run} method is allowed to throw any exception.
- * 
+ *
  * @since 2.9
  */
 @FunctionalInterface
-public interface ThrowingRunnable {
-
-	/**
-	 * Runs this {@code ThrowingRunnable}.
-	 * 
-	 * @throws Exception Any exception
-	 */
-	public void run() throws Exception;
+public interface ThrowingRunnable extends SpecificThrowingRunnable<Exception> {
 }

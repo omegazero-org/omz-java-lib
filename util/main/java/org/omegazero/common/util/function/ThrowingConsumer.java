@@ -8,18 +8,10 @@ package org.omegazero.common.util.function;
 
 /**
  * Similar to a {@link java.util.function.Consumer}, except that the functional {@code accept} method is allowed to throw any exception.
- * 
+ *
  * @param <T> The input type
  * @since 2.9
  */
 @FunctionalInterface
-public interface ThrowingConsumer<T> {
-
-	/**
-	 * Runs this {@code ThrowingConsumer}.
-	 * 
-	 * @param t The input argument
-	 * @throws Exception Any exception
-	 */
-	public void accept(T t) throws Exception;
+public interface ThrowingConsumer<T> extends SpecificThrowingConsumer<Exception, T> {
 }

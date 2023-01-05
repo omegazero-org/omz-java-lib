@@ -8,18 +8,10 @@ package org.omegazero.common.util.function;
 
 /**
  * Similar to a {@link java.util.function.Supplier}, except that the functional {@code get} method is allowed to throw any exception.
- * 
+ *
  * @param <R> The result type
  * @since 2.9
  */
 @FunctionalInterface
-public interface ThrowingSupplier<R> {
-
-	/**
-	 * Creates a result.
-	 * 
-	 * @return The result
-	 * @throws Exception Any exception
-	 */
-	public R get() throws Exception;
+public interface ThrowingSupplier<R> extends SpecificThrowingSupplier<Exception, R> {
 }

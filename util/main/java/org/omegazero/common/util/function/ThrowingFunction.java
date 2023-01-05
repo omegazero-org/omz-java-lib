@@ -8,20 +8,11 @@ package org.omegazero.common.util.function;
 
 /**
  * Similar to a {@link java.util.function.Function}, except that the functional {@code apply} method is allowed to throw any exception.
- * 
+ *
  * @param <T> The input type
  * @param <R> The result type
  * @since 2.9
  */
 @FunctionalInterface
-public interface ThrowingFunction<T, R> {
-
-	/**
-	 * Performs an operation on the given object and returns its result.
-	 * 
-	 * @param t The input argument
-	 * @return The result
-	 * @throws Exception Any exception
-	 */
-	public R apply(T t) throws Exception;
+public interface ThrowingFunction<T, R> extends SpecificThrowingFunction<Exception, T, R> {
 }

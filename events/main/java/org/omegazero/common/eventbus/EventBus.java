@@ -84,6 +84,8 @@ public class EventBus {
 	 * @param forcedEvents The list of event names the caller asserts that the given event bus subscriber is listening to
 	 */
 	public synchronized void register(Subscriber subscriber, String... forcedEvents) {
+		if(subscriber == null)
+			throw new NullPointerException();
 		if(this.subscribers.contains(subscriber))
 			throw new IllegalStateException("The given subscriber is already registered");
 		if(forcedEvents.length > 0)
@@ -100,6 +102,8 @@ public class EventBus {
 	 * @since 2.7
 	 */
 	public synchronized boolean unregister(Subscriber subscriber) {
+		if(subscriber == null)
+			throw new NullPointerException();
 		if(this.subscribers.remove(subscriber)){
 			this.flushEventCache();
 			return true;
@@ -114,9 +118,7 @@ public class EventBus {
 	 * @param instance The event bus subscriber instance
 	 */
 	public synchronized void unregister(Object instance) {
-		if(this.subscribers.removeIf((sub) -> {
-			return sub.getInstance().equals(instance);
-		}))
+		if(this.subscribers.removeIf((sub) -> sub.getInstance().equals(instance)))
 			this.flushEventCache();
 	}
 
@@ -127,9 +129,7 @@ public class EventBus {
 	 * @param type The type
 	 */
 	public synchronized void unregister(Class<?> type) {
-		if(this.subscribers.removeIf((sub) -> {
-			return sub.getType().equals(type);
-		}))
+		if(this.subscribers.removeIf((sub) -> sub.getType().equals(type)))
 			this.flushEventCache();
 	}
 
@@ -168,6 +168,8 @@ public class EventBus {
 	 * @see EventBus
 	 */
 	public int dispatchEvent(Event event, Object... args) {
+		if(event == null)
+			throw new NullPointerException();
 		return this.dispatchEvent0(event, null, args);
 	}
 
@@ -183,6 +185,8 @@ public class EventBus {
 	 * @see EventBus
 	 */
 	public EventResult dispatchEventRes(Event event, Object... args) {
+		if(event == null)
+			throw new NullPointerException();
 		EventResult res = new EventResult();
 		int c = this.dispatchEvent0(event, res, args);
 		res.listeners = c;

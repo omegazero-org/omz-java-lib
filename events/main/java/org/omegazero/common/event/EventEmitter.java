@@ -68,7 +68,8 @@ public class EventEmitter {
 	 * Calling this method switches this {@code EventEmitter} to <i>fastAccess</i> mode.
 	 * <p>
 	 * If {@code expect} is non-negative and the generated next event ID does not match its value, no event ID will be created and an {@code IllegalStateException} thrown. This may be used by
-	 * applications to assert a specific event ID, which removes the requirement for runtime event ID storage.
+	 * applications to assert a specific event ID, which removes the requirement for runtime event ID storage. Event IDs always start at {@code 0} for the first event and are incremented for each
+	 * additional event.
 	 *
 	 * @param name The event name
 	 * @param expect The expected event ID
@@ -82,7 +83,7 @@ public class EventEmitter {
 			throw new IllegalStateException("createEventId cannot be called when listeners are active");
 		if(expect >= 0 && expect != id)
 			throw new IllegalStateException("createEventId: Expectation failed: expect=" + expect + " id=" + id);
-		this.events.put(name, id);
+		this.events.put(Objects.requireNonNull(name), id);
 		this.reserveEventIdSpace(id);
 		this.fastAccessIdCounter++;
 		return id;
@@ -333,7 +334,7 @@ public class EventEmitter {
 	public synchronized void prependEventListener(String name, GenericRunnable runnable){
 		EventListenersObj listeners = this.getEventListeners0(name, true);
 		synchronized(listeners){
-			listeners.list.add(0, runnable);
+			listeners.list.add(0, Objects.requireNonNull(runnable));
 			listeners.listChanged();
 		}
 	}
@@ -353,7 +354,7 @@ public class EventEmitter {
 	public synchronized void addEventListener(String name, GenericRunnable runnable){
 		EventListenersObj listeners = this.getEventListeners0(name, true);
 		synchronized(listeners){
-			listeners.list.add(runnable);
+			listeners.list.add(Objects.requireNonNull(runnable));
 			listeners.listChanged();
 		}
 	}
@@ -368,7 +369,7 @@ public class EventEmitter {
 	 * @see #addEventListener(String, GenericRunnable)
 	 */
 	public synchronized void addEventListenerOnce(String name, GenericRunnable runnable){
-		new OnceRunnable(name, runnable);
+		new OnceRunnable(Objects.requireNonNull(name), Objects.requireNonNull(runnable));
 	}
 
 	/**
@@ -383,6 +384,7 @@ public class EventEmitter {
 	 * @see #removeDefaultEventListener(String)
 	 */
 	public synchronized void removeEventListener(String name, GenericRunnable runnable){
+		Objects.requireNonNull(runnable);
 		EventListenersObj listeners = this.getEventListeners0(name, false);
 		if(listeners != null){
 			synchronized(listeners){

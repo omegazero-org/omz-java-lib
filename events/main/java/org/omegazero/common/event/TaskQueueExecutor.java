@@ -8,6 +8,7 @@ package org.omegazero.common.event;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -64,14 +65,12 @@ public class TaskQueueExecutor {
 	 * @see Builder
 	 */
 	public TaskQueueExecutor(Queue<Task> queue, int maxWorkerThreadCount, boolean daemon, String threadName) {
-		if(queue == null || threadName == null)
-			throw new NullPointerException();
 		if(maxWorkerThreadCount <= 0)
 			throw new IllegalArgumentException("maxWorkerThreadCount = " + maxWorkerThreadCount);
-		this.queue = queue;
+		this.queue = Objects.requireNonNull(queue);
 		this.maxWorkerThreadCount = maxWorkerThreadCount;
 		this.daemon = daemon;
-		this.threadName = threadName;
+		this.threadName = Objects.requireNonNull(threadName);
 
 		this.lock = new ReentrantLock();
 		this.taskWaitCondition = this.lock.newCondition();
@@ -118,6 +117,8 @@ public class TaskQueueExecutor {
 	 * @see Queue#offer(Object)
 	 */
 	public boolean queue(Task task, Handle handle) {
+		if(task == null)
+			throw new NullPointerException();
 		if(!this.running)
 			throw new IllegalStateException("Not running");
 		if(this.workerThreads.size() < this.maxWorkerThreadCount && (!this.queue.isEmpty() || this.workingThreads.get() >= this.workerThreads.size())){
@@ -150,6 +151,8 @@ public class TaskQueueExecutor {
 	 * @see ReflectTask#ReflectTask(Method, Object, Object[], int)
 	 */
 	public boolean queue(java.lang.reflect.Method method, Object callerInstance, int priority, Object... args) {
+		if(method == null || callerInstance == null)
+			throw new NullPointerException();
 		return this.queue(new ReflectTask(method, callerInstance, args, priority));
 	}
 
@@ -163,6 +166,8 @@ public class TaskQueueExecutor {
 	 * @see RunnableTask#RunnableTask(Runnable, int)
 	 */
 	public boolean queue(Runnable handler, int priority) {
+		if(handler == null)
+			throw new NullPointerException();
 		return this.queue(new RunnableTask(handler, priority));
 	}
 
@@ -176,6 +181,8 @@ public class TaskQueueExecutor {
 	 * @see LambdaTask#LambdaTask(Consumer, Object[], int)
 	 */
 	public boolean queue(Consumer<Object[]> handler, int priority, Object... args) {
+		if(handler == null)
+			throw new NullPointerException();
 		return this.queue(new LambdaTask(handler, args, priority));
 	}
 
@@ -340,7 +347,7 @@ public class TaskQueueExecutor {
 	 * <p>
 	 * If this handler is not set, the error will be {@linkplain Throwable#printStackTrace() printed to <code>stderr</code>}.
 	 * 
-	 * @param errorHandler The error handler
+	 * @param errorHandler The error handler, or {@code null} to remove an existing error handler
 	 */
 	public void setErrorHandler(Consumer<Throwable> errorHandler) {
 		this.errorHandler = errorHandler;
@@ -374,9 +381,7 @@ public class TaskQueueExecutor {
 		private String threadName = "TaskExecutor";
 
 		private Builder(Queue<Task> queue) {
-			if(queue == null)
-				throw new NullPointerException();
-			this.queue = queue;
+			this.queue = Objects.requireNonNull(queue);
 		}
 
 
@@ -421,9 +426,7 @@ public class TaskQueueExecutor {
 		 * @return This builder
 		 */
 		public Builder name(String threadName) {
-			if(threadName == null)
-				throw new NullPointerException();
-			this.threadName = threadName;
+			this.threadName = Objects.requireNonNull(threadName);
 			return this;
 		}
 

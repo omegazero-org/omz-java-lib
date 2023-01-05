@@ -13,6 +13,7 @@ package org.omegazero.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.omegazero.common.event.task.LambdaTask;
@@ -71,6 +72,7 @@ public class TaskScheduler {
 	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Runnable handler, long timeout) {
+		Objects.requireNonNull(handler);
 		return this.timeout((a) -> {
 			handler.run();
 		}, timeout);
@@ -89,6 +91,7 @@ public class TaskScheduler {
 	 * @see #interval(Consumer, long, Object...)
 	 */
 	public TimerTask timeout(Consumer<Object[]> handler, long timeout, Object... args) {
+		Objects.requireNonNull(handler);
 		TimerTask tt = new TimerTask(++this.idCounter, handler, System.nanoTime() + timeout * 1000000L, 0, args);
 		queue(tt);
 		return tt;
@@ -106,6 +109,7 @@ public class TaskScheduler {
 	 * @see #timeout(Consumer, long, Object...)
 	 */
 	public TimerTask interval(Runnable handler, long interval) {
+		Objects.requireNonNull(handler);
 		return this.interval((a) -> {
 			handler.run();
 		}, interval);
@@ -124,6 +128,7 @@ public class TaskScheduler {
 	 * @see #timeout(Consumer, long, Object...)
 	 */
 	public TimerTask interval(Consumer<Object[]> handler, long interval, Object... args) {
+		Objects.requireNonNull(handler);
 		TimerTask tt = new TimerTask(++this.idCounter, handler, System.nanoTime() + interval * 1000000L, interval * 1000000L, args);
 		queue(tt);
 		return tt;
@@ -350,7 +355,7 @@ public class TaskScheduler {
 	 * If an error occurs while queuing a task and no handler is set, the error is {@linkplain Throwable#printStackTrace() printed to <code>stderr</code>}. For default
 	 * behavior when an error occurs while running a task, see {@link TaskQueueExecutor#setErrorHandler(Consumer)}.
 	 * 
-	 * @param errorHandler The error handler
+	 * @param errorHandler The error handler, or {@code null} to remove an existing error handler
 	 * @since 2.6
 	 * @see TaskQueueExecutor#setErrorHandler(Consumer)
 	 */

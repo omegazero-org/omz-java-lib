@@ -129,10 +129,32 @@ public class ConfigArray implements Serializable, Iterable<Object> {
 	 * Converts this {@code ConfigArray} to an {@code Object} array.
 	 * 
 	 * @return The array containing all elements
+	 * @see #toArray(Class)
 	 * @see List#toArray()
 	 */
 	public Object[] toArray() {
 		return this.data.toArray();
+	}
+
+	/**
+	 * Converts this {@code ConfigArray} to an array of the given <b>type</b>.
+	 *
+	 * @param type The target type
+	 * @return The array containing all elements
+	 * @throws ClassCastException If any element in this {@code ConfigArray} is not of the given <b>type</b>
+	 * @since 2.11.0
+	 * @see #toArray()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T[] toArray(Class<T> type){
+		T[] array = (T[]) java.lang.reflect.Array.newInstance(type, this.size());
+		for(int i = 0; i < array.length; i++){
+			Object o = this.get(i);
+			if(!type.isAssignableFrom(o.getClass()))
+				throw new ClassCastException("Cannot convert array to element type " + type.getName() + ": " + o.getClass() + " cannot be cast to " + type);
+			array[i] = (T) o;
+		}
+		return array;
 	}
 
 	/**

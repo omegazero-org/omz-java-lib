@@ -117,21 +117,27 @@ public final class StandardLogger implements Logger {
 			if(ENABLE_ST_CLASS_SOURCE){
 				String sourceFile = null;
 				String version = null;
-				Class<?> classObj = element.getDeclaringClass();
-				if(classObj != null){
-					java.security.CodeSource codeSource = classObj.getProtectionDomain().getCodeSource();
-					if(codeSource != null && codeSource.getLocation() != null){
-						sourceFile = codeSource.getLocation().toString();
-						if(sourceFile.startsWith("file:/") && !ENABLE_ST_CLASS_SOURCE_FULL){
-							int si = sourceFile.lastIndexOf('/');
-							if(si == sourceFile.length() - 1)
-								si = sourceFile.lastIndexOf('/', sourceFile.length() - 2);
-							if(si >= 0)
-								sourceFile = sourceFile.substring(si + 1);
+				try{
+					Class<?> classObj = element.getDeclaringClass();
+					if(classObj != null){
+						java.security.CodeSource codeSource = classObj.getProtectionDomain().getCodeSource();
+						if(codeSource != null && codeSource.getLocation() != null){
+							sourceFile = codeSource.getLocation().toString();
+							if(sourceFile.startsWith("file:/") && !ENABLE_ST_CLASS_SOURCE_FULL){
+								int si = sourceFile.lastIndexOf('/');
+								if(si == sourceFile.length() - 1)
+									si = sourceFile.lastIndexOf('/', sourceFile.length() - 2);
+								if(si >= 0)
+									sourceFile = sourceFile.substring(si + 1);
+							}
 						}
+						if(classObj.getPackage() != null)
+							version = classObj.getPackage().getImplementationVersion();
 					}
-					if(classObj.getPackage() != null)
-						version = classObj.getPackage().getImplementationVersion();
+				}catch(Throwable e){
+					if(LoggerUtil.ENABLE_INTERNAL_DEBUG)
+						LoggerUtil.sysErr.println("StandardLogger: Get class source failed: " + e);
+					sourceFile = "<<" + e.toString() + ">>";
 				}
 				if(sourceFile == null)
 					sourceFile = "?";

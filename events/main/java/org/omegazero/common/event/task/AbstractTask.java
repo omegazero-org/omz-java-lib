@@ -53,14 +53,17 @@ public abstract class AbstractTask implements Task {
 	 * <p>
 	 * General behavior includes running a task handler (for example a method) with the arguments passed in the constructor.
 	 * 
-	 * @throws ExecutionFailedException If an error occurs during execution of the task
+	 * @throws ExecutionFailedException If an error occurs during execution of the task. {@code ExecutionFailedException}s thrown by the task handler will be propagated unchanged
 	 */
 	@Override
 	public void run() {
 		try{
 			this.execute(this.args);
 		}catch(Exception e){
-			throw new ExecutionFailedException(e);
+			if(e instanceof ExecutionFailedException)
+				throw (ExecutionFailedException) e;
+			else
+				throw new ExecutionFailedException(e);
 		}
 	}
 

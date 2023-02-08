@@ -163,9 +163,11 @@ public final class LoggerUtil {
 		String fullName = caller.getClassName();
 		String[] str = fullName.split("\\.");
 		String label = str[str.length - 1];
+		if(label.endsWith("$")) // names of scala singleton classes end with "$"
+			label = label.substring(0, label.length() - 1);
 		new LUPermission("logger", "create", fullName).check();
 		if(ENABLE_INTERNAL_DEBUG)
-			sysErr.println("LoggerUtil: New StandardLogger for " + fullName);
+			sysErr.println("LoggerUtil: New StandardLogger for " + fullName + " with label " + label);
 		return new StandardLogger(fullName, label);
 	}
 

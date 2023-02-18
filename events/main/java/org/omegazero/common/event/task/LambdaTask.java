@@ -57,8 +57,8 @@ public class LambdaTask extends AbstractTask {
 
 	@Override
 	protected void execute(Object[] args) throws Exception {
-		if(this.handler == null)
-			throw new IllegalStateException("This task is destroyed");
-		this.handler.accept(args);
+		Consumer<Object[]> handler = this.handler;
+		if(handler != null)
+			handler.accept(args);
 	}
 }

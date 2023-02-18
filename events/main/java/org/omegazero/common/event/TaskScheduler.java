@@ -192,9 +192,9 @@ public class TaskScheduler {
 	public boolean clear(TimerTask tt) {
 		if(tt == null)
 			return false;
+		tt.canceled = true;
+		tt.destroy();
 		synchronized(this.queue){
-			tt.canceled = true;
-			tt.destroy();
 			this.queue.notifyAll();
 			return true;
 		}
@@ -212,18 +212,17 @@ public class TaskScheduler {
 	 */
 	@Deprecated
 	public boolean clear(long id) {
+		TimerTask tt = null;
 		synchronized(this.queue){
 			for(int i = 0; i < this.queue.size(); i++){
 				TimerTask t = this.queue.get(i);
 				if(t.id == id){
-					t.canceled = true;
-					t.destroy();
-					this.queue.notifyAll();
-					return true;
+					tt = t;
+					break;
 				}
 			}
-			return false;
 		}
+		return this.clear(tt);
 	}
 
 

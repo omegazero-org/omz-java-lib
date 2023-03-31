@@ -161,6 +161,8 @@ public class TaskScheduler {
 			}
 			if(r < 0)
 				index = 0;
+			while(index < this.queue.size() && task.time > this.queue.get(index).time)
+				index++;
 			this.queue.add(index, task);
 			this.queue.notifyAll();
 		}
@@ -252,10 +254,11 @@ public class TaskScheduler {
 			long time = System.nanoTime();
 			TimerTask t = this.queue.get(0);
 
+			long tExecTime = (t.time - time) / 1000000L;
 			if(t.canceled)
 				this.queue.remove(0);
-			else if(t.time > time)
-				this.queue.wait((t.time - time) / 1000000L);
+			else if(tExecTime > 0)
+				this.queue.wait(tExecTime);
 
 			if(this.queue.size() < 1)
 				return;

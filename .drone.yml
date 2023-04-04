@@ -10,7 +10,7 @@ steps:
   image: omz-ci-tools
   pull: never
   commands:
-  - artifact-dl-java mvncentral/org.json:json:20211205
+  - artifact-dl-java mvncentral/org.json:json:20210307
 
 - name: prepare-source
   image: omz-ci-tools
@@ -21,50 +21,46 @@ steps:
   - curl -G "https://omegazero.org/site/software/r/license_bin_full.php" --data-urlencode "srcurl=$DRONE_REPO_LINK/src/commit/$DRONE_COMMIT" > LICENSE_BIN
 
 - name: build-util
-  image: openjdk:8
+  image: o-jvm-build
+  pull: never
   commands:
-  - mkdir -p build/util/bin/META-INF
-  - cp LICENSE_BIN build/util/bin/META-INF/LICENSE
-  - find util/main/java -iname "*.java" > build/util/srcfiles
-  - javac -version -verbose -Xlint:all,-processing -d build/util/bin @build/util/srcfiles
-  - jar cf build-util.jar -C build/util/bin .
+  - mkdir -p build/util/META-INF
+  - cp LICENSE_BIN build/util/META-INF/LICENSE
+  - make util BINDIR=build
   depends_on:
   - prepare-dependencies
   - prepare-source
 
 - name: build-config
-  image: openjdk:8
+  image: o-jvm-build
+  pull: never
   commands:
-  - mkdir -p build/config/bin/META-INF
-  - cp LICENSE_BIN build/config/bin/META-INF/LICENSE
-  - find config/main/java -iname "*.java" > build/config/srcfiles
-  - javac -version -verbose -Xlint:all,-processing -d build/config/bin @build/config/srcfiles -cp json-20211205.jar
-  - jar cf build-config.jar -C build/config/bin .
+  - mkdir -p build/config/META-INF
+  - cp LICENSE_BIN build/config/META-INF/LICENSE
+  - make config BINDIR=build
   depends_on:
   - prepare-dependencies
   - prepare-source
 
 - name: build-events
-  image: openjdk:8
+  image: o-jvm-build
+  pull: never
   commands:
-  - mkdir -p build/events/bin/META-INF
-  - cp LICENSE_BIN build/events/bin/META-INF/LICENSE
-  - find events/main/java -iname "*.java" > build/events/srcfiles
-  - javac -version -verbose -Xlint:all,-processing -d build/events/bin @build/events/srcfiles -cp build-util.jar
-  - jar cf build-events.jar -C build/events/bin .
+  - mkdir -p build/events/META-INF
+  - cp LICENSE_BIN build/events/META-INF/LICENSE
+  - make events BINDIR=build
   depends_on:
   - prepare-dependencies
   - prepare-source
   - build-util
 
 - name: build-logging
-  image: openjdk:8
+  image: o-jvm-build
+  pull: never
   commands:
-  - mkdir -p build/logging/bin/META-INF
-  - cp LICENSE_BIN build/logging/bin/META-INF/LICENSE
-  - find logging/main/java -iname "*.java" > build/logging/srcfiles
-  - javac -version -verbose -Xlint:all,-processing -d build/logging/bin @build/logging/srcfiles -cp build-util.jar:build-events.jar
-  - jar cf build-logging.jar -C build/logging/bin .
+  - mkdir -p build/logging/META-INF
+  - cp LICENSE_BIN build/logging/META-INF/LICENSE
+  - make logging BINDIR=build
   depends_on:
   - prepare-dependencies
   - prepare-source
@@ -72,15 +68,12 @@ steps:
   - build-events
 
 - name: build-all
-  image: openjdk:8
+  image: o-jvm-build
+  pull: never
   commands:
-  - mkdir -p build/misc/bin
-  - find misc/main/java -iname "*.java" > build/misc/srcfiles
-  - javac -version -verbose -Xlint:all,-processing -d build/misc/bin @build/misc/srcfiles -cp build-util.jar:build-config.jar:build-events.jar:build-logging.jar
-  - mkdir -p build/all/bin/META-INF
-  - cp -r build/util/bin/* build/config/bin/* build/events/bin/* build/logging/bin/* build/misc/bin/* build/all/bin
-  - cp LICENSE_BIN build/all/bin/META-INF/LICENSE
-  - jar cf build-all.jar -C build/all/bin .
+  - mkdir -p build/omz-java-lib-all/META-INF
+  - cp LICENSE_BIN build/omz-java-lib-all/META-INF/LICENSE
+  - make alljar BINDIR=build
   depends_on:
   - build-util
   - build-config
@@ -91,11 +84,11 @@ steps:
   image: omz-ci-tools
   pull: never
   commands:
-  - artifact-push-java build-all.jar omz/org.omegazero.common:omz-common
-  - artifact-push-java build-util.jar omz/org.omegazero.common:omz-common-util
-  - artifact-push-java build-config.jar omz/org.omegazero.common:omz-common-config
-  - artifact-push-java build-events.jar omz/org.omegazero.common:omz-common-events
-  - artifact-push-java build-logging.jar omz/org.omegazero.common:omz-common-logging
+  - artifact-push-java build/omz-java-lib-all.jar omz/org.omegazero.common:omz-common
+  - artifact-push-java build/util.jar omz/org.omegazero.common:omz-common-util
+  - artifact-push-java build/config.jar omz/org.omegazero.common:omz-common-config
+  - artifact-push-java build/events.jar omz/org.omegazero.common:omz-common-events
+  - artifact-push-java build/logging.jar omz/org.omegazero.common:omz-common-logging
   depends_on:
   - build-all
   environment:

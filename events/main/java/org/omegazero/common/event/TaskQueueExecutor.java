@@ -611,6 +611,7 @@ public class TaskQueueExecutor {
 				}
 			}finally{
 				TaskQueueExecutor.this.lock.unlock();
+				Thread.interrupted(); // clear interrupt status
 			}
 		}
 

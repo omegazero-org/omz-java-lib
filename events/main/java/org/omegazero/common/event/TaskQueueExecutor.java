@@ -33,7 +33,7 @@ import org.omegazero.common.event.task.Task;
  * 
  * @since 2.6
  */
-public class TaskQueueExecutor {
+public class TaskQueueExecutor extends AbstractTaskQueueExecutor {
 
 	private static java.util.Map<String, Integer> threadCounter = new java.util.HashMap<>();
 
@@ -78,7 +78,7 @@ public class TaskQueueExecutor {
 
 
 	/**
-	 * Queues a task to be executed by any available worker thread.
+	 * {@inheritDoc}
 	 * <p>
 	 * 
 	 * Equivalent to a call to:
@@ -86,11 +86,8 @@ public class TaskQueueExecutor {
 	 * <pre>
 	 * {@link #queue(Task, Handle) queue}(task, null)
 	 * </pre>
-	 * 
-	 * @param task The task to queue
-	 * @return <code>true</code> if the task was successfully queued
-	 * @see #unqueue(Task)
 	 */
+	@Override
 	public boolean queue(Task task) {
 		return this.queue(task, null);
 	}
@@ -140,60 +137,7 @@ public class TaskQueueExecutor {
 		return res;
 	}
 
-	/**
-	 * Creates a new {@link ReflectTask} instance and adds it to the event queue using {@link #queue(Task)}.
-	 * 
-	 * @param method The task handler method
-	 * @param callerInstance The instance to call the method with. May be <code>null</code> if the method is static
-	 * @param args The arguments to pass to the task handler when this task is executed
-	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
-	 * @return <code>true</code> if the task was successfully queued
-	 * @see ReflectTask#ReflectTask(Method, Object, Object[], int)
-	 */
-	public boolean queue(java.lang.reflect.Method method, Object callerInstance, int priority, Object... args) {
-		if(method == null || callerInstance == null)
-			throw new NullPointerException();
-		return this.queue(new ReflectTask(method, callerInstance, args, priority));
-	}
-
-	/**
-	 * Creates a new {@link RunnableTask} instance and adds it to the event queue using {@link #queue(Task)}.
-	 * 
-	 * @param handler The task handler
-	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
-	 * @return <code>true</code> if the task was successfully queued
-	 * @since 2.9
-	 * @see RunnableTask#RunnableTask(Runnable, int)
-	 */
-	public boolean queue(Runnable handler, int priority) {
-		if(handler == null)
-			throw new NullPointerException();
-		return this.queue(new RunnableTask(handler, priority));
-	}
-
-	/**
-	 * Creates a new {@link LambdaTask} instance and adds it to the event queue using {@link #queue(Task)}.
-	 * 
-	 * @param handler The task handler
-	 * @param args The arguments to pass to the task handler when this task is executed
-	 * @param priority The priority of this task. May be ignored if the backing queue does not support prioritization
-	 * @return <code>true</code> if the task was successfully queued
-	 * @see LambdaTask#LambdaTask(Consumer, Object[], int)
-	 */
-	public boolean queue(Consumer<Object[]> handler, int priority, Object... args) {
-		if(handler == null)
-			throw new NullPointerException();
-		return this.queue(new LambdaTask(handler, args, priority));
-	}
-
-	/**
-	 * Removes the given task from the queue.
-	 * 
-	 * @param task The task to remove
-	 * @return <code>true</code> if the task was queued and successfully removed
-	 * @see #queue(Task)
-	 * @see Queue#remove(Object)
-	 */
+	@Override
 	public boolean unqueue(Task task) {
 		if(!this.running)
 			throw new IllegalStateException("Not running");
@@ -279,19 +223,7 @@ public class TaskQueueExecutor {
 
 
 	/**
-	 * Shuts this {@link TaskQueueExecutor} down by gracefully stopping the worker threads.
-	 * <p>
-	 * Equivalent to a call to:
-	 * <pre><code>
-	 * {@link #exit(boolean) exit}(false)
-	 * </code></pre>
-	 */
-	public void exit(){
-		this.exit(false);
-	}
-
-	/**
-	 * Shuts this {@link TaskQueueExecutor} down by interrupting all idle worker threads, causing them to exit. Worker threads that are currently running a task are not
+	 * Shuts this {@code TaskQueueExecutor} down by interrupting all idle worker threads, causing them to exit. Worker threads that are currently running a task are not
 	 * interrupted, but will exit after finishing the task.
 	 * <p>
 	 * If <b>blocking</b> is <code>true</code>, the calling thread will be blocked until all worker threads have exited. If the calling thread is interrupted while waiting, this
@@ -300,6 +232,7 @@ public class TaskQueueExecutor {
 	 * @param blocking {@code true} to wait for all worker threads to exit
 	 * @return <code>true</code> if the calling thread was interrupted while waiting for the worker threads to exit
 	 */
+	@Override
 	public boolean exit(boolean blocking){
 		synchronized(this){
 			if(!this.running)
@@ -342,13 +275,7 @@ public class TaskQueueExecutor {
 		return this.workerThreads.size();
 	}
 
-	/**
-	 * Sets the error handler that will be called when an error occurs while executing a task in any of the worker threads.
-	 * <p>
-	 * If this handler is not set, the error will be {@linkplain Throwable#printStackTrace() printed to <code>stderr</code>}.
-	 * 
-	 * @param errorHandler The error handler, or {@code null} to remove an existing error handler
-	 */
+	@Override
 	public void setErrorHandler(Consumer<Throwable> errorHandler) {
 		this.errorHandler = errorHandler;
 	}

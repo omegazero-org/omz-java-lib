@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -324,7 +325,7 @@ public final class ReflectionUtil {
 	 * <p>
 	 * The method part of the identifier (the part after the {@code ::}) consists of the method name, followed by a parameter type signature of the same format as
 	 * {@link getClassesForSignature(String)} accepts, enclosed in parentheses (any return type after the closing parenthesis is ignored). If the method has no parameters, the parameter
-	 * type signature parentheses may be omitted.
+	 * type signature parentheses may be omitted. If the method name equals the special string "{@code <init>}", the constructor of the class is called.
 	 * <p>
 	 * For example, {@code callMethod("java.lang.String::length", "example")} returns {@code 7} (the length of the string).
 	 *
@@ -356,17 +357,23 @@ public final class ReflectionUtil {
 			mname = methodSig;
 			params = new Class<?>[0];
 		}
-		Method method = cl.getDeclaredMethod(mname, params);
-		method.setAccessible(true);
-		Object instance = null;
-		if(!Modifier.isStatic(method.getModifiers())){
-			if(arguments.length == 0)
-				throw new IllegalArgumentException("Method is not static but no arguments were passed");
-			instance = arguments[0];
-			arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
-		}else if(arguments.length - 1 == params.length && cl.equals(arguments[0].getClass()))
-			arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
-		return (T) method.invoke(instance, arguments);
+		if(mname.equals("<init>")){
+			Constructor<?> constructor = cl.getDeclaredConstructor(params);
+			constructor.setAccessible(true);
+			return (T) constructor.newInstance(arguments);
+		}else{
+			Method method = cl.getDeclaredMethod(mname, params);
+			method.setAccessible(true);
+			Object instance = null;
+			if(!Modifier.isStatic(method.getModifiers())){
+				if(arguments.length == 0)
+					throw new IllegalArgumentException("Method is not static but no arguments were passed");
+				instance = arguments[0];
+				arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
+			}else if(arguments.length - 1 == params.length && cl.equals(arguments[0].getClass()))
+				arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
+			return (T) method.invoke(instance, arguments);
+		}
 	}
 
 	/**

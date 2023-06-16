@@ -14,6 +14,8 @@ package org.omegazero.common.event;
 import java.util.function.Consumer;
 
 import org.omegazero.common.event.TaskScheduler.TimerTask;
+import org.omegazero.common.util.PropertyUtil;
+import org.omegazero.common.util.ReflectionUtil;
 
 /**
  * Convenience class for globally scheduled tasks using a {@link TaskScheduler}.
@@ -176,8 +178,18 @@ public final class Tasks {
 	}
 
 
-	static{
-		I = new TaskScheduler();
+	static {
+		String taskWorker = PropertyUtil.getString("org.omegazero.common.event.taskWorker", null);
+		TaskScheduler taskSched;
+		if(taskWorker != null){
+			try{
+				taskSched = new TaskScheduler(ReflectionUtil.get(taskWorker));
+			}catch(Exception e){
+				throw new RuntimeException("Could not initialize taskWorker '" + taskWorker + "'", e);
+			}
+		}else
+			taskSched = new TaskScheduler();
+		I = taskSched;
 		TASKS = I;
 	}
 }

@@ -26,16 +26,16 @@ import org.omegazero.common.event.task.LambdaTask;
  * Timing may be inaccurate, depending on the platform. The implementation uses {@link Object#wait(long)}.
  * <p>
  * This class is thread-safe.
- * 
+ *
  * @since 2.1
  */
 public class TaskScheduler {
 
-	private List<TimerTask> queue = new ArrayList<>();
+	private final List<TimerTask> queue = new ArrayList<>();
+
+	private final AbstractTaskQueueExecutor executor;
 
 	private long idCounter = 0;
-
-	private TaskQueueExecutor executor = TaskQueueExecutor.fromSequential().name("TaskScheduler").workerThreads(-2).build();
 
 	private Consumer<Throwable> errorHandler;
 
@@ -43,10 +43,24 @@ public class TaskScheduler {
 
 	/**
 	 * Creates a TaskScheduler and starts the background execution thread.
-	 * 
+	 * <p>
+	 * The {@code TaskScheduler} is started with a standard {@link TaskQueueExecutor} with at least two threads.
+	 *
 	 * @since 2.1
 	 */
 	public TaskScheduler() {
+		this(TaskQueueExecutor.fromSequential().name("TaskScheduler").workerThreads(-2).build());
+	}
+
+	/**
+	 * Creates a TaskScheduler with the given {@link AbstractTaskQueueExecutor} to run tasks, and starts the background execution thread.
+	 *
+	 * @param executor The executor to run tasks with
+	 * @since 2.12.0
+	 */
+	public TaskScheduler(AbstractTaskQueueExecutor executor) {
+		this.executor = executor;
+
 		Thread executionThread = new Thread(){
 
 			@Override

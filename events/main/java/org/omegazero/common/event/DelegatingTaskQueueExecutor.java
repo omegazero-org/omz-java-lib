@@ -33,6 +33,15 @@ public class DelegatingTaskQueueExecutor extends AbstractTaskQueueExecutor {
 
 
 	/**
+	 * Returns the currently set {@link AbstractTaskQueueExecutor} to delegate tasks to.
+	 *
+	 * @return The current delegate
+	 */
+	public synchronized AbstractTaskQueueExecutor getDelegate(){
+		return this.delegate;
+	}
+
+	/**
 	 * Sets a new {@link AbstractTaskQueueExecutor} to delegate tasks to.
 	 *
 	 * @param delegate The new {@link AbstractTaskQueueExecutor}

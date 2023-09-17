@@ -19,6 +19,7 @@ import org.omegazero.common.event.task.LambdaTask;
 import org.omegazero.common.event.task.ReflectTask;
 import org.omegazero.common.event.task.RunnableTask;
 import org.omegazero.common.event.task.Task;
+import org.omegazero.common.util.PropertyUtil;
 
 /**
  * Used for running {@link Task}s concurrently, backed by a {@link Queue}, which need not be thread-safe. Up to a predefined number of threads can be used for executing tasks.
@@ -34,6 +35,13 @@ import org.omegazero.common.event.task.Task;
  * @since 2.6
  */
 public class TaskQueueExecutor extends AbstractTaskQueueExecutor {
+
+	/**
+	 * If {@code true} (the default), the {@link WorkerThread} assigned to a {@link Handle} is randomly selected.
+	 *
+	 * @since 2.12.1
+	 */
+	private static final boolean randomHandleThreads = PropertyUtil.getBoolean("org.omegazero.common.event.randomHandleThreads", true);
 
 	private static java.util.Map<String, Integer> threadCounter = new java.util.HashMap<>();
 
@@ -164,13 +172,14 @@ public class TaskQueueExecutor extends AbstractTaskQueueExecutor {
 	 * 
 	 * @return The new {@code Handle}
 	 * @since 2.9
+	 * @see #randomHandleThreads
 	 */
 	public Handle newHandle() {
 		if(!this.running)
 			throw new IllegalStateException("Not running");
-		double lowestP = 2;
 		WorkerThread lowestLoadedThread = null;
-		if(this.totalTasksExecuted > 0){
+		if(!randomHandleThreads && this.totalTasksExecuted > 0){
+			double lowestP = 2;
 			for(WorkerThread wt : this.workerThreads){
 				double p = (double) wt.executedTasks / this.totalTasksExecuted;
 				if(p < lowestP){

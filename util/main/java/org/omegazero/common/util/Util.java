@@ -12,6 +12,7 @@
 package org.omegazero.common.util;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -178,5 +179,52 @@ public final class Util {
 		if(f.length() > length)
 			f = f.substring(0, length);
 		return f;
+	}
+
+
+	/**
+	 * Splits a string, possibly containing quoted substrings, on the given delimiter character.
+	 * <p>
+	 * Substrings enclosed in double quotes ({@code ""}) are treated as a single token in the output, and the quotes are removed. Otherwise, all string parts separated by the given delimiter are
+	 * treated as a single token, and are put into the returned list as one element each. If a double quote character is preceded by a backslash, it is treated as a regular character.
+	 * <p>
+	 * If the double quote character is given as the delimiter, the behavior is undefined.
+	 * <p>
+	 * The {@code max} parameter works similar as in the {@link String#split(String, int)} method. The returned list is at most {@code max} elements long and any excess tokens are stored
+	 * in the last element unchanged. {@code max} may be non-positive to return any amount of elements.
+	 * <p>
+	 * Examples:
+	 * <pre><code>
+	 * 	splitQuotedString("\"aa \\\" bb\" cc dd", ' ', -1) returns [aa " bb, cc, dd]
+	 * 	splitQuotedString("\"\" cc dd", ' ', -1) or splitQuotedString(" cc dd", ' ', -1) returns [, cc, dd]
+	 * 	splitQuotedString("a a \"aa \\\" bb\" cc dd", ' ', 3) returns [a, a, aa " bb cc dd]
+	 * </code></pre>
+	 *
+	 * @param str The string to split
+	 * @param delim The delimiter character
+	 * @param max If positive, the maximum number of individual tokens to return
+	 * @return The list of separated tokens
+	 * @since 2.12.1
+	 */
+	public static List<String> splitQuotedString(String str, char delim, int max){
+		boolean inq = false;
+		List<String> strings = new java.util.ArrayList<>();
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < str.length(); i++){
+			char c = str.charAt(i);
+			if(c == '\\' && i < str.length() - 1){
+				sb.append(str.charAt(i + 1));
+				i++;
+			}else if(c == '"'){
+				inq = !inq;
+			}else if(!inq && c == delim && (max < 0 || strings.size() + 1 < max)){
+				strings.add(sb.toString());
+				sb.setLength(0);
+			}else{
+				sb.append(c);
+			}
+		}
+		strings.add(sb.toString());
+		return strings;
 	}
 }

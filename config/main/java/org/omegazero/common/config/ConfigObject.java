@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 omegazero.org
+ * Copyright (C) 2021-2025 omegazero.org
  *
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  * If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -12,6 +12,9 @@
 package org.omegazero.common.config;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -420,11 +423,6 @@ public class ConfigObject implements Serializable {
 	}
 
 
-	@SuppressWarnings("unchecked")
-	private <T> void addToList(List<T> list, Object o) {
-		list.add((T) o);
-	}
-
 	/**
 	 * Populates all fields with the {@link ConfigurationOption} annotation of the given {@code targetObject} with values from this {@code ConfigObject} using reflection.
 	 * <p>
@@ -443,29 +441,15 @@ public class ConfigObject implements Serializable {
 	 */
 	public void populateConfigurationOptions(Object targetObject){
 		try{
-			java.lang.reflect.Field[] fields = targetObject.getClass().getDeclaredFields();
-			for(java.lang.reflect.Field f : fields){
-				String name = f.getName();
+			Field[] fields = targetObject.getClass().getDeclaredFields();
+			for(Field f : fields){
 				ConfigurationOption opt = f.getAnnotation(ConfigurationOption.class);
 				if(opt == null)
 					continue;
+				String name = f.getName();
 				if(this.containsKey(name)){
 					f.setAccessible(true);
-					if(f.getType() == List.class){
-						java.lang.reflect.ParameterizedType pt = (java.lang.reflect.ParameterizedType) f.getGenericType();
-						Class<?> genericType = (Class<?>) pt.getActualTypeArguments()[0];
-						ConfigArray array = this.getArray(name);
-						List<?> l = new java.util.ArrayList<>();
-						for(int i = 0; i < array.size(); i++){
-							Object o = convertObjectValue(array.get(i), genericType, name + "[" + i + "]");
-							this.addToList(l, o);
-						}
-						f.set(targetObject, l);
-					}else{
-						Object data = this.get(name);
-						Object value = convertObjectValue(data, f.getType(), name);
-						f.set(targetObject, value);
-					}
+					f.set(targetObject, convertObjectValueComplex(this.get(name), f.getGenericType(), name));
 				}else if(opt.required())
 					throw new ConfigurationException("Missing required option '" + name + "'");
 			}
@@ -526,6 +510,48 @@ public class ConfigObject implements Serializable {
 
 	private static String getTypeName(Object obj) {
 		return obj == null ? "null" : obj.getClass().getName();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> void addToList(List<T> list, Object o) {
+		list.add((T) o);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> void addToMap(Map<String, T> map, String k, Object o) {
+		map.put(k, (T) o);
+	}
+
+	private static Object convertObjectValueComplex(Object obj, Type type, String name){
+		Class<?> fieldtype = (Class<?>) (type instanceof ParameterizedType ? ((ParameterizedType) type).getRawType() : type);
+		if(fieldtype == List.class){
+			ParameterizedType pt = (ParameterizedType) type;
+			if(!(obj instanceof ConfigArray))
+				throw new ConfigurationException("Expected '" + ConfigArray.class.getName() + "' for '" + name + "' but received value of type '" + getTypeName(obj) + "'");
+			ConfigArray array = (ConfigArray) obj;
+			List<?> l = new java.util.ArrayList<>();
+			for(int i = 0; i < array.size(); i++){
+				Object o = convertObjectValueComplex(array.get(i), pt.getActualTypeArguments()[0], name + "[" + i + "]");
+				addToList(l, o);
+			}
+			return l;
+		}else if(fieldtype == Map.class){
+			ParameterizedType pt = (ParameterizedType) type;
+			Class<?> genericTypeKey = (Class<?>) pt.getActualTypeArguments()[0];
+			if(genericTypeKey != String.class)
+				throw new UnsupportedOperationException("Cannot have '" + genericTypeKey.getName() + "' as Map key, only the String key type is supported for Map configuration options");
+			if(!(obj instanceof ConfigObject))
+				throw new ConfigurationException("Expected '" + ConfigObject.class.getName() + "' for '" + name + "' but received value of type '" + getTypeName(obj) + "'");
+			ConfigObject object = (ConfigObject) obj;
+			Map<String, ?> m = new java.util.HashMap<>();
+			for(String k : object.keySet()){
+				Object o = convertObjectValueComplex(object.get(k), pt.getActualTypeArguments()[1], name + "[" + k + "]");
+				addToMap(m, k, o);
+			}
+			return m;
+		}else{
+			return convertObjectValue(obj, fieldtype, name);
+		}
 	}
 
 	private static Object convertObjectValue(Object obj, Class<?> type, String name){
